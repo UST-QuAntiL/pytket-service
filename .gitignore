@@ -1,3 +1,9 @@
 __pycache__
 *.pyc
 migrations
+.idea/
+.DS_Store
+app.db
+test.db
+*.pyo
+test/_trial_temp
