@@ -1,4 +1,4 @@
-# tket-service
+# pytket-service
 
 This service takes an implementation via an URL and compiles it using the **tket** compiler and optionally executed. 
 It returns either its resulting depth & width (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
@@ -15,7 +15,7 @@ It returns either its resulting depth & width (Transpilation Request) or its res
 ## Transpilation Request
 Send implementation, input, QPU information, and your authentication token to the API to get depth and width of resulting circuit.
 
-`POST /tket-service/api/v1.0/transpile`  
+`POST /pytket-service/api/v1.0/transpile`  
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",
@@ -43,7 +43,7 @@ Send implementation, input, QPU information, and your authentication token to th
 ## Execution Request
 Send implementation, input, QPU information, and your authentication token to the API to execute your circuit and get the result.
 
-`POST /tket-service/api/v1.0/execute`  
+`POST /pytket-service/api/v1.0/execute`  
 ```
 {  
     "impl-url": "URL-OF-IMPLEMENTATION",

@@ -34,5 +34,5 @@ migrate = Migrate(app, db)
 from app import routes, result_model, errors
 
 app.redis = Redis.from_url(app.config['REDIS_URL'])
-app.execute_queue = rq.Queue('tket-service_execute', connection=app.redis, default_timeout=3600)
+app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=3600)
 app.logger.setLevel(logging.INFO)

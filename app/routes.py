@@ -28,7 +28,7 @@ import json
 import re
 
 
-@app.route('/tket-service/api/v1.0/transpile', methods=['POST'])
+@app.route('/pytket-service/api/v1.0/transpile', methods=['POST'])
 def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
@@ -112,7 +112,7 @@ def transpile_circuit():
     return jsonify({'depth': depth, 'width': width}), 200
 
 
-@app.route('/tket-service/api/v1.0/execute', methods=['POST'])
+@app.route('/pytket-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
     """Put execution job in queue. Return location of the later result."""
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json:
@@ -132,14 +132,14 @@ def execute_circuit():
     db.session.commit()
 
     logging.info('Returning HTTP response to client...')
-    content_location = '/tket-service/api/v1.0/results/' + result.id
+    content_location = '/pytket-service/api/v1.0/results/' + result.id
     response = jsonify({'Location': content_location})
     response.status_code = 202
     response.headers['Location'] = content_location
     return response
 
 
-@app.route('/tket-service/api/v1.0/results/<result_id>', methods=['GET'])
+@app.route('/pytket-service/api/v1.0/results/<result_id>', methods=['GET'])
 def get_result(result_id):
     """Return result when it is available."""
     result = Result.query.get(result_id)
@@ -150,6 +150,6 @@ def get_result(result_id):
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 
 
-@app.route('/tket-service/api/v1.0/version', methods=['GET'])
+@app.route('/pytket-service/api/v1.0/version', methods=['GET'])
 def version():
     return jsonify({'version': '1.0'})
