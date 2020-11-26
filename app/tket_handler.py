@@ -37,7 +37,7 @@ def get_circuit_conversion_for(sdk):
     # Default if no SDK matched
     return None
 
-def get_backend(provider, qpu):
+def get_backend(provider, qpu, for_execution):
     """
     Get the backend instance by name
     :param provider:
@@ -47,6 +47,8 @@ def get_backend(provider, qpu):
 
     if provider == "IBMQ":
         try:
+            if (qpu == 'ibmq_qasm_simulator' and for_execution):
+                return AerBackend()
             return IBMQBackend(qpu)
         except NoIBMQAccountError as e:
             return None

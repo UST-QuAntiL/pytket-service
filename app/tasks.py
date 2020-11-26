@@ -51,7 +51,7 @@ def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
     circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
 
     # Get the backend
-    backend = get_backend(provider, qpu_name)
+    backend = get_backend(provider, qpu_name, for_execution=True)
 
     # Transpile the circuit for the backend
     try:

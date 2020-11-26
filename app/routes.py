@@ -60,7 +60,7 @@ def transpile_circuit():
         return jsonify({'error': str(e)}), 200
 
     # Identify the backend given provider and qpu name
-    backend = get_backend(provider, qpu_name)
+    backend = get_backend(provider, qpu_name, for_execution=False)
 
     if not backend:
         app.logger.warn(f"{qpu_name} not found.")
@@ -118,9 +118,9 @@ def execute_circuit():
     if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json:
         abort(400)
     impl_url = request.json['impl-url']
-    qpu_name = request.json['qpu-name']
     provider = request.json["provider"]
     sdk = request.json["sdk"]
+    qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
