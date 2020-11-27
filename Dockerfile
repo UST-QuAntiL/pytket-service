@@ -9,11 +9,11 @@ RUN apt-get install -y gcc python3-dev
 RUN pip install -r requirements.txt
 COPY . /app
 
-EXPOSE 5000/tcp
+EXPOSE 5757/tcp
 
-ENV FLASK_APP=tket-service.py
+ENV FLASK_APP=pytket-service.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=0
 RUN echo "python -m flask db upgrade" > /app/startup.sh
-RUN echo "gunicorn tket-service:app -b 0.0.0.0:5000 -w 4 --timeout 500 --log-level info" >> /app/startup.sh
+RUN echo "gunicorn pytket-service:app -b 0.0.0.0:5757 -w 4 --timeout 500 --log-level info" >> /app/startup.sh
 

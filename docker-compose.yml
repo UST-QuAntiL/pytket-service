@@ -10,11 +10,11 @@ services:
       - "6379:6379"
     networks:
       - default
-  qiskit-service:
-    image: planqk/qiskit-service:latest
+  pytket-service:
+    image: planqk/pytket-service:latest
     command: sh /app/startup.sh
     ports:
-      - "5000:5000"
+      - "5757:5757"
     environment:
       - REDIS_URL=redis://redis
       - DATABASE_URL=sqlite:////data/app.db
@@ -23,9 +23,9 @@ services:
     networks:
       - default
 
-  rq-worker:
-    image: planqk/qiskit-service:latest
-    command: rq worker --url redis://redis qiskit-service_execute
+  pytket-rq-worker:
+    image: planqk/pytket-service:latest
+    command: rq worker --url redis://redis pytket-service_execute
     environment:
       - REDIS_URL=redis://redis
       - DATABASE_URL=sqlite:////data/app.db

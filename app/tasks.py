@@ -95,7 +95,7 @@ def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
 
     # Execute the circuit on the backend
     # validity was checked before
-    job_handle = backend.process_circuit(circuit, n_shots=shots, valid_check= False)
+    job_handle = backend.process_circuit(circuit, n_shots=shots, valid_check=False)
     job_status = backend.circuit_status(job_handle)
     job_result = backend.get_result(job_handle)
 
