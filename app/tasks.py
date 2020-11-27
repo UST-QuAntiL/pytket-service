@@ -28,6 +28,7 @@ import json
 import re
 import numpy as np
 from pytket.circuit import Qubit
+from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 
 def convert_counts_to_json(counts):
 
@@ -40,6 +41,20 @@ def convert_counts_to_json(counts):
     return json.dumps(result)
 
 
+def rename_qreg_lowercase(circuit, *regs):
+    """
+    Renames qubit-registers to lowercase names, because uppercase letters in register names causes the execution to fail.
+    :param circuit: the circuit
+    :param regs: list of registers
+    :return:
+    """
+
+    qasm = circuit_to_qasm_str(circuit)
+
+    for reg in regs:
+        qasm = qasm.replace(reg, reg.lower())
+
+    return circuit_from_qasm_str(qasm)
 
 
 def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
@@ -68,31 +83,19 @@ def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
                                          logger=None, precompile_circuit=True)
     finally:
         if not backend.valid_circuit(circuit):
-            #TODO: store in the result database
             result = Result.query.get(job.get_id())
             result.result = json.dumps({'error': 'execution failed'})
             result.complete = True
             db.session.commit()
-    """
-    # Try to simplify the circuit
-    if not circuit.is_simple:
+            return
 
-        transformation = {}
-
-        for q in circuit.qubits:
-            print(q)
-            new_q = Qubit(name="q", index=q.index)
-            transformation[q] = new_q
-
-        circuit.rename_units(transformation)
-    """
-    print("Stats:")
-    print(circuit.is_simple)
-    print(circuit.qubits)
-    print(circuit.get_commands())
+    # Rename registers to lower case
+    register_names = set(map(lambda q: q.reg_name, circuit.qubits))
+    circuit = rename_qreg_lowercase(circuit, *register_names)
 
     # Execute the circuit on the backend
-    job_handle = backend.process_circuit(circuit, n_shots=shots)
+    # validity was checked before
+    job_handle = backend.process_circuit(circuit, n_shots=shots, valid_check= False)
     job_status = backend.circuit_status(job_handle)
     job_result = backend.get_result(job_handle)
 
