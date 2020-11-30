@@ -60,7 +60,7 @@ def transpile_circuit():
         return jsonify({'error': str(e)}), 200
 
     # Identify the backend given provider and qpu name
-    backend = get_backend(provider, qpu_name, for_execution=False)
+    backend = get_backend(provider, qpu_name)
 
     if not backend:
         app.logger.warn(f"{qpu_name} not found.")
