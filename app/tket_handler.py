@@ -5,10 +5,22 @@ from pytket.cirq import cirq_to_tk, tk_to_cirq
 from pytket.backends.ibm import IBMQBackend, AerBackend, NoIBMQAccountError
 from pytket.backends.braket import BraketBackend
 from pytket.circuit import Circuit as TKCircuit
+from pytket.circuit import OpType
 
 from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
+
+
+def get_depth_without_barrier(circuit):
+    """
+    Get the depth of the circuit without counting barriers.
+    This is equivalent to the Qiskit style of counting.
+    :param circuit:
+    :return:
+    """
+    circuit_ops = set(map(lambda c: c.op.type, circuit.get_commands())) - {OpType.Barrier}
+    return circuit.depth_by_type(circuit_ops)
 
 
 def setup_credentials(sdk, **kwargs):
