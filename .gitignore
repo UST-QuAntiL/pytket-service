@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+migrations
+app/data/app.db
+.idea/
+.DS_Store
+app.db
+test.db
+*.pyo
+test/_trial_temp
+/.ipynb_checkpoints/
