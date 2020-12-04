@@ -3,9 +3,6 @@
 This service takes an implementation via an URL and compiles it using the **tket** compiler and optionally executed. 
 It returns either its resulting depth & width (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend.
 
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
 ## Setup
 
 
