@@ -40,11 +40,14 @@ def get_circuit_conversion_for(sdk):
     :return:
     """
 
-    if sdk == "Qiskit":
+    if sdk.lower() == "qiskit":
         return qiskit_to_tk
 
-    if sdk == "Cirq":
+    if sdk.lower() == "cirq":
         return cirq_to_tk
+
+    if sdk.lower() == "qasm":
+        return lambda x: x
 
     # Default if no SDK matched
     return None

@@ -8,6 +8,7 @@ from flask import jsonify, abort, request
 import logging
 import json
 import re
+import base64
 
 
 @app.route('/pytket-service/api/v1.0/transpile', methods=['POST'])
@@ -15,31 +16,62 @@ def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
 
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json:
+    if not request.json or not 'qpu-name' in request.json or not 'provider' in request.json or not 'sdk' in request.json:
         abort(400)
 
-    impl_url = request.json['impl-url']
     provider = request.json["provider"]
     sdk = request.json["sdk"]
     qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
 
-    short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
-
     # setup the SDK credentials first
     setup_credentials(sdk, **input_params)
 
-    # Download and execute the implementation
-    try:
-        circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-        if not circuit:
-            app.logger.warn(f"{short_impl_name} not found.")
-            abort(404)
+    if 'impl-url' in request.json:
 
-    except Exception as e:
-        app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
-        return jsonify({'error': str(e)}), 200
+        impl_url = request.json['impl-url']
+
+        # Download and execute the implementation
+        try:
+
+            if sdk.lower() == "qasm":
+                short_impl_name = re.match(".*/(?P<file>.*\\.qasm)", impl_url).group('file')
+                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
+            else:
+                short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
+
+            if not circuit:
+                app.logger.warn(f"{short_impl_name} not found.")
+                abort(404)
+
+        except Exception as e:
+            app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
+            return jsonify({'error': str(e)}), 200
+
+    elif 'impl-data' in request.json:
+
+        short_impl_name = "untitled"
+
+        try:
+            impl_data = base64.standard_b64decode(request.json['impl-data'].encode()).decode()
+
+            if sdk.lower() == "qasm":
+                circuit = implementation_handler.prepare_code_from_qasm(impl_data)
+            else:
+                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+
+            if not circuit:
+                app.logger.warn(f"{short_impl_name} not found.")
+                abort(404)
+
+        except Exception as e:
+            app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
+            return jsonify({'error': str(e)}), 200
+    else:
+        app.logger.warn("No implementation specified.")
+        abort(400)
 
     # Identify the backend given provider and qpu name
     backend = get_backend(provider, qpu_name)
