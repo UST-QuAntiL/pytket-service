@@ -27,6 +27,7 @@ def transpile_circuit():
 
     # setup the SDK credentials first
     setup_credentials(provider, **input_params)
+    circuit = None
 
     if 'impl-url' in request.json:
 

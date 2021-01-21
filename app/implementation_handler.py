@@ -13,6 +13,7 @@ def prepare_code_from_data(data, input_params):
     with open(os.path.join(temp_dir, "downloaded_code.py"), "w") as f:
         f.write(data)
     sys.path.append(temp_dir)
+    circuit=None
     try:
         import downloaded_code
 
@@ -21,6 +22,8 @@ def prepare_code_from_data(data, input_params):
             circuit = downloaded_code.get_circuit(**input_params)
         elif 'qc' in dir(downloaded_code):
             circuit = downloaded_code.qc
+        elif 'p' in dir(downloaded_code):
+            circuit = downloaded_code.p
     finally:
         sys.path.remove(temp_dir)
         shutil.rmtree(temp_dir, ignore_errors=True)
