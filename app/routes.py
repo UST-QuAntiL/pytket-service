@@ -1,6 +1,6 @@
 from app import app, implementation_handler, db, parameters
 from app.result_model import Result
-from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier
+from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, get_circuit_qasm
 from qiskit import IBMQ
 import pytket
 
@@ -118,12 +118,15 @@ def transpile_circuit():
         app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
         abort(500)
 
+    # convert the circuit to QASM string
+    circuit_qasm = get_circuit_qasm(circuit)
+
     # get statistics about the compiled circuit
     width = circuit.n_qubits
     depth = get_depth_without_barrier(circuit)
 
     app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: w={width} d={depth}")
-    return jsonify({'depth': depth, 'width': width}), 200
+    return jsonify({'depth': depth, 'width': width, 'transpiled-qasm': circuit_qasm}), 200
 
 
 @app.route('/pytket-service/api/v1.0/execute', methods=['POST'])

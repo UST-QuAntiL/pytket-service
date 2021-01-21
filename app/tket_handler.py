@@ -2,10 +2,12 @@ import re
 
 from pytket.qiskit import qiskit_to_tk, tk_to_qiskit
 from pytket.cirq import cirq_to_tk, tk_to_cirq
+from pytket.pyquil import pyquil_to_tk
 from pytket.backends.ibm import IBMQBackend, AerBackend, NoIBMQAccountError
 from pytket.backends.braket import BraketBackend
 from pytket.circuit import Circuit as TKCircuit
 from pytket.circuit import OpType
+from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 
 from qiskit.compiler import transpile
 from qiskit import IBMQ
@@ -50,6 +52,9 @@ def get_circuit_conversion_for(impl_language):
 
     if impl_language.lower() == "cirq":
         return cirq_to_tk
+
+    if impl_language.lower() == "pyquil":
+        return pyquil_to_tk
 
     # Default if no impl_language matched
     return None
@@ -166,4 +171,7 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
             raise e
 
     return circuit
+
+def get_circuit_qasm(circuit):
+    return circuit_to_qasm_str(circuit)
 
