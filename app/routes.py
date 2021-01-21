@@ -16,18 +16,17 @@ def transpile_circuit():
     """Get implementation from URL. Pass input into implementation. Generate and transpile circuit
     and return depth and width."""
 
-    if not request.json or not 'qpu-name' in request.json or not 'provider' in request.json or not 'sdk' in request.json:
+    if not request.json or not 'qpu-name' in request.json or not 'provider' in request.json or not 'impl-language' in request.json:
         abort(400)
 
     provider = request.json["provider"]
     impl_language = request.json["impl-language"]
-    sdk = request.json["sdk"] if "sdk" in request.json else None
     qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
 
     # setup the SDK credentials first
-    setup_credentials(sdk, **input_params)
+    setup_credentials(provider, **input_params)
 
     if 'impl-url' in request.json:
 
@@ -86,7 +85,7 @@ def transpile_circuit():
 
         try:
             circuit = tket_transpile_circuit(circuit,
-                                             sdk=sdk,
+                                             impl_language=impl_language,
                                              backend=backend,
                                              short_impl_name=short_impl_name,
                                              logger=app.logger.info,
@@ -134,14 +133,15 @@ def execute_circuit():
         abort(400)
     impl_url = request.json['impl-url']
     provider = request.json["provider"]
-    sdk = request.json["sdk"]
+    impl_language = request.json["impl-language"]
     qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name,
-                                    input_params=input_params, shots=shots, provider= provider, sdk= sdk)
+                                    input_params=input_params, shots=shots, provider= provider,
+                                    impl_language=impl_language)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()

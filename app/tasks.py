@@ -38,7 +38,7 @@ def rename_qreg_lowercase(circuit, *regs):
     return circuit_from_qasm_str(qasm)
 
 
-def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
+def execute(impl_url, input_params, provider, qpu_name, impl_language, shots):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
     short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
@@ -52,13 +52,13 @@ def execute(impl_url, input_params, provider, qpu_name, sdk, shots):
     # Transpile the circuit for the backend
     try:
         circuit = tket_transpile_circuit(circuit,
-                                         sdk=sdk,
+                                         impl_language=impl_language,
                                          backend=backend,
                                          short_impl_name=short_impl_name,
                                          logger=None, precompile_circuit=False)
     except UnsupportedGateException as e:
         circuit = tket_transpile_circuit(circuit,
-                                         sdk=sdk,
+                                         impl_language=impl_language,
                                          backend=backend,
                                          short_impl_name=short_impl_name,
                                          logger=None, precompile_circuit=True)

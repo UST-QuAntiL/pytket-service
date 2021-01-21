@@ -23,9 +23,9 @@ def get_depth_without_barrier(circuit):
     return circuit.depth_by_type(circuit_ops)
 
 
-def setup_credentials(sdk, **kwargs):
+def setup_credentials(provider, **kwargs):
 
-    if sdk == "Qiskit":
+    if provider.lower() == "ibmq":
         if IBMQ.stored_account():
             IBMQ.delete_account()
         if 'token' in kwargs:
@@ -33,25 +33,25 @@ def setup_credentials(sdk, **kwargs):
             IBMQ.load_account()
 
 
-def get_circuit_conversion_for(sdk):
+def get_circuit_conversion_for(impl_language):
     """
     Get the circuit conversion function by name.
-    :param sdk:
+    :param impl_language:
     :return:
     """
 
-    if not sdk:
+    if not impl_language:
         return lambda x: x
 
-    assert isinstance(sdk, str)
+    assert isinstance(impl_language, str)
 
-    if sdk.lower() == "qiskit":
+    if impl_language.lower() == "qiskit":
         return qiskit_to_tk
 
-    if sdk.lower() == "cirq":
+    if impl_language.lower() == "cirq":
         return cirq_to_tk
 
-    # Default if no SDK matched
+    # Default if no impl_language matched
     return None
 
 def get_backend(provider, qpu):
@@ -62,13 +62,13 @@ def get_backend(provider, qpu):
     :return:
     """
 
-    if provider == "IBMQ":
+    if provider.lower() == "ibmq":
         try:
             return IBMQBackend(qpu)
         except NoIBMQAccountError as e:
             return None
 
-    if provider == "Braket":
+    if provider.lower() == "braket":
         # TODO: error handling ???
         return BraketBackend(device= qpu)
 
@@ -79,15 +79,15 @@ def is_tk_circuit(circuit):
     return isinstance(circuit, TKCircuit)
 
 
-def pretranspile_circuit(circuit, sdk):
+def pretranspile_circuit(circuit, impl_language):
     """
     Pre-transpiles the circuit using the SDKs transpiler if available
     :param circuit:
-    :param sdk:
+    :param impl_language:
     :return:
     """
 
-    if sdk == "Qiskit":
+    if impl_language.lower() == "qiskit":
         return pretranspile_qiskit_circuit(circuit)
     else:
         return circuit
@@ -141,15 +141,15 @@ class TooManyQubitsException(Exception):
     pass
 
 
-def tket_transpile_circuit(circuit, sdk, backend, short_impl_name, logger=None, precompile_circuit=False):
+def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, logger=None, precompile_circuit=False):
 
     if precompile_circuit:
         if logger:
-            logger(f"Precompiling {short_impl_name} using {sdk} standard compiler...")
-        circuit = pretranspile_circuit(circuit, sdk)
+            logger(f"Precompiling {short_impl_name} using {impl_language} standard compiler...")
+        circuit = pretranspile_circuit(circuit, impl_language)
     try:
-        # Convert the given Circuit (implemented with SDK) to a standard TKet circuit
-        to_tk = get_circuit_conversion_for(sdk=sdk)
+        # Convert the given Circuit (implemented with impl_language) to a standard TKet circuit
+        to_tk = get_circuit_conversion_for(impl_language)
         circuit = to_tk(circuit)
 
     except KeyError as e:
