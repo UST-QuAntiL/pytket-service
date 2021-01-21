@@ -20,7 +20,8 @@ def transpile_circuit():
         abort(400)
 
     provider = request.json["provider"]
-    sdk = request.json["sdk"]
+    impl_language = request.json["impl-language"]
+    sdk = request.json["sdk"] if "sdk" in request.json else None
     qpu_name = request.json['qpu-name']
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
@@ -35,7 +36,7 @@ def transpile_circuit():
         # Download and execute the implementation
         try:
 
-            if sdk.lower() == "qasm":
+            if impl_language.lower() == "openqasm":
                 short_impl_name = re.match(".*/(?P<file>.*\\.qasm)", impl_url).group('file')
                 circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
             else:
@@ -57,7 +58,7 @@ def transpile_circuit():
         try:
             impl_data = base64.standard_b64decode(request.json['impl-data'].encode()).decode()
 
-            if sdk.lower() == "qasm":
+            if impl_language.lower() == "openqasm":
                 circuit = implementation_handler.prepare_code_from_qasm(impl_data)
             else:
                 circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
