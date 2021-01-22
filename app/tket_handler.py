@@ -56,6 +56,9 @@ def get_circuit_conversion_for(impl_language):
     if impl_language.lower() == "pyquil":
         return pyquil_to_tk
 
+    if impl_language.lower() == "openqasm":
+        return lambda x: x
+
     # Default if no impl_language matched
     return None
 

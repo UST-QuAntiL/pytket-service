@@ -82,7 +82,7 @@ def transpile_circuit():
         abort(404)
 
     precompiled_circuit = False
-    while not is_tk_circuit(circuit):
+    while not is_tk_circuit(circuit) or not backend.valid_circuit(circuit):
 
         try:
             circuit = tket_transpile_circuit(circuit,
