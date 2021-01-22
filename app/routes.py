@@ -133,18 +133,24 @@ def transpile_circuit():
 @app.route('/pytket-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
     """Put execution job in queue. Return location of the later result."""
-    if not request.json or not 'impl-url' in request.json or not 'qpu-name' in request.json:
+    if not request.json or not 'qpu-name' in request.json or not 'provider'  in request.json:
         abort(400)
-    impl_url = request.json['impl-url']
+
     provider = request.json["provider"]
-    impl_language = request.json["impl-language"]
     qpu_name = request.json['qpu-name']
+
+    impl_url = request.json.get('impl-url')
+    impl_language = request.json.get("impl-language")
+    impl_data = request.json.get('impl-data')
+    transpiled_qasm = request.json.get('transpiled-qasm')
+
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
 
-    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, qpu_name=qpu_name,
-                                    input_params=input_params, shots=shots, provider= provider,
+    job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
+                                    transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
+                                    input_params=input_params, shots=shots, provider=provider,
                                     impl_language=impl_language)
     result = Result(id=job.get_id())
     db.session.add(result)
