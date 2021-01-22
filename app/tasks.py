@@ -1,15 +1,10 @@
 from app import implementation_handler, db
-from qiskit import transpile
-from qiskit.transpiler.exceptions import TranspilerError
 from rq import get_current_job
-from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, get_backend
+from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, get_backend, setup_credentials
 from app.result_model import Result
-import logging
 import json
 import re
 import base64
-import numpy as np
-from pytket.circuit import Qubit
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 
 def convert_counts_to_json(counts):
@@ -64,7 +59,8 @@ def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_na
         else:
             circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
 
-
+    # setup the SDK credentials first
+    setup_credentials(provider, **input_params)
     # Get the backend
     backend = get_backend(provider, qpu_name)
 

@@ -133,7 +133,7 @@ def transpile_circuit():
 @app.route('/pytket-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
     """Put execution job in queue. Return location of the later result."""
-    if not request.json or not 'qpu-name' in request.json or not 'provider'  in request.json:
+    if not request.json or not 'qpu-name' in request.json or not 'provider' in request.json:
         abort(400)
 
     provider = request.json["provider"]
