@@ -33,7 +33,6 @@ docker-compose up
 
 ## Transpilation/Compilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here or illustration purposes.
 `POST /pytket-service/api/v1.0/transpile`  
 
 #### Transpilation/Compilation via URL
@@ -57,8 +56,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
-    },
-    "token": "YOUR-IBMQ-TOKEN"
+    }
 }
 ```
 #### Transpilation via File
@@ -82,14 +80,12 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
-    },
-    "token": "YOUR-IBMQ-TOKEN"
+    }
 }
 ```
 
 ## Execution Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to execute your circuit and get the result.
-*Note*: ``token`` should either be in ``input-params`` or extra. Both variants are combined here for illustration purposes.
 
 `POST /pytket-service/api/v1.0/execute`  
 #### Execution via URL
@@ -113,8 +109,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
-    },
-    "token": "YOUR-IBMQ-TOKEN"
+    }
 }
 ```
 #### Execution via data
@@ -138,8 +133,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
-    },
-    "token": "YOUR-IBMQ-TOKEN"
+    }
 }
 ```
 #### Execution via transpiled OpenQASM String
@@ -153,8 +147,7 @@ Send implementation, input, QPU information, and your IBM Quantum Experience tok
             "rawValue": "YOUR-IBMQ-TOKEN",
             "type": "Unknown"
         }
-    },
-    "token": "YOUR-IBMQ-TOKEN"
+    }
 }
 ```
 Returns a content location for the result. Access it via `GET`.
