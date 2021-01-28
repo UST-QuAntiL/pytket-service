@@ -8,6 +8,8 @@ from pytket.backends.braket import BraketBackend
 from pytket.circuit import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
+from pytket.backends.forest import ForestBackend
+from flask import abort
 
 from qiskit.compiler import transpile
 from qiskit import IBMQ
@@ -28,11 +30,11 @@ def get_depth_without_barrier(circuit):
 def setup_credentials(provider, **kwargs):
 
     if provider.lower() == "ibmq":
-        if IBMQ.stored_account():
-            IBMQ.delete_account()
         if 'token' in kwargs:
-            IBMQ.save_account(token=kwargs['token'])
+            IBMQ.save_account(token=kwargs['token'], overwrite=True)
             IBMQ.load_account()
+        else:
+            abort(400)
 
 
 def get_circuit_conversion_for(impl_language):
@@ -79,6 +81,9 @@ def get_backend(provider, qpu):
     if provider.lower() == "braket":
         # TODO: error handling ???
         return BraketBackend(device= qpu)
+
+    if provider.lower() == "rigetti":
+        return ForestBackend(qpu, simulator=True)
 
     # Default if no provider matched
     return None
@@ -166,7 +171,7 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
 
     try:
         # Use tket to compile the circuit
-        backend.compile_circuit(circuit, optimisation_level=0)
+        backend.compile_circuit(circuit, optimisation_level=2)
     except RuntimeError as e:
         if re.match(".* MaxNQubitsPredicate\\([0-9]+\\)", str(e)):
             raise TooManyQubitsException()

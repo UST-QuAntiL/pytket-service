@@ -37,16 +37,14 @@ def transpile_circuit():
         try:
 
             if impl_language.lower() == "openqasm":
-                short_impl_name = re.match(".*/(?P<file>.*\\.qasm)", impl_url).group('file')
+                short_impl_name = "no name"
                 circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
             else:
-                short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
+                short_impl_name = "untitled"
                 circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
 
-            if not circuit:
-                app.logger.warn(f"{short_impl_name} not found.")
-                abort(404)
-
+        except ValueError:
+            abort(400)
         except Exception as e:
             app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
             return jsonify({'error': str(e)}), 200
