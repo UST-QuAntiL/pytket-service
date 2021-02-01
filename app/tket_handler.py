@@ -1,20 +1,25 @@
 import re
+import os
 
 from pytket.qiskit import qiskit_to_tk, tk_to_qiskit
 from pytket.cirq import cirq_to_tk, tk_to_cirq
 from pytket.pyquil import pyquil_to_tk
 from pytket.backends.ibm import IBMQBackend, AerBackend, NoIBMQAccountError
 from pytket.backends.braket import BraketBackend
+from app.forest_backend import ForestBackend
+from pyquil.api import ForestConnection
 from pytket.circuit import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
-from pytket.backends.forest import ForestBackend
 from flask import abort
 
 from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
+# Get environment variables
+qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
+qvm_port = os.environ.get('QVM_PORT', default=5666)
 
 def get_depth_without_barrier(circuit):
     """
@@ -83,7 +88,13 @@ def get_backend(provider, qpu):
         return BraketBackend(device= qpu)
 
     if provider.lower() == "rigetti":
-        return ForestBackend(qpu, simulator=True)
+
+        # Create a connection to the forest SDK
+        connection = ForestConnection(
+            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}",
+            compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
+
+        return ForestBackend(qpu, simulator=True, connection= connection)
 
     # Default if no provider matched
     return None
