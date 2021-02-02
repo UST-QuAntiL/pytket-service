@@ -14,7 +14,7 @@ services:
     image: planqk/pytket-service:latest
     command: sh /app/startup.sh
     ports:
-      - "5757:5757"
+      - "5001:5000"
     environment:
       - REDIS_URL=redis://redis
       - DATABASE_URL=sqlite:////data/app.db
