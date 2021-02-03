@@ -91,10 +91,9 @@ def get_backend(provider, qpu):
 
         # Create a connection to the forest SDK
         connection = ForestConnection(
-            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}",
-            compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
+            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}")
 
-        return ForestBackend(qpu, simulator=True, connection= connection)
+        return ForestBackend(qpu, simulator=True, connection=connection)
 
     # Default if no provider matched
     return None
