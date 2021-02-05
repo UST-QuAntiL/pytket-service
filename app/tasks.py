@@ -3,8 +3,6 @@ from rq import get_current_job
 from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, get_backend, setup_credentials
 from app.result_model import Result
 import json
-import re
-import base64
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 
 def convert_counts_to_json(counts):
@@ -38,26 +36,7 @@ def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_na
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
 
-    if impl_url:
-
-        if impl_language.lower() == "openqasm":
-            short_impl_name = re.match(".*/(?P<file>.*\\.qasm)", impl_url).group('file')
-            # Download and execute the implementation
-            circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-        else:
-            short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
-            # Download and execute the implementation
-            circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-
-    elif impl_data:
-
-        short_impl_name = "untitled"
-        impl_data = base64.standard_b64decode(impl_data.encode()).decode()
-
-        if impl_language.lower() == "openqasm":
-            circuit = implementation_handler.prepare_code_from_qasm(impl_data)
-        else:
-            circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
+    circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params)
 
     # setup the SDK credentials first
     setup_credentials(provider, **input_params)

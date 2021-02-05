@@ -1,6 +1,6 @@
 from app import app, implementation_handler, db, parameters
 from app.result_model import Result
-from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, get_circuit_qasm
+from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, prepare_transpile_response
 from qiskit import IBMQ
 import pytket
 
@@ -28,49 +28,22 @@ def transpile_circuit():
     # setup the SDK credentials first
     setup_credentials(provider, **input_params)
     circuit = None
+    short_impl_name = ""
 
-    if 'impl-url' in request.json:
+    impl_url = request.json['impl-url'] if 'impl-url' in request.json else None
+    impl_data = base64.standard_b64decode(request.json['impl-data'].encode()).decode() if 'impl-data' in request.json else None
 
-        impl_url = request.json['impl-url']
-
-        # Download and execute the implementation
-        try:
-
-            if impl_language.lower() == "openqasm":
-                short_impl_name = "no name"
-                circuit = implementation_handler.prepare_code_from_qasm_url(impl_url)
-            else:
-                short_impl_name = "untitled"
-                circuit = implementation_handler.prepare_code_from_url(impl_url, input_params)
-
-        except ValueError:
-            abort(400)
-        except Exception as e:
-            app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
-            return jsonify({'error': str(e)}), 200
-
-    elif 'impl-data' in request.json:
-
-        short_impl_name = "untitled"
-
-        try:
-            impl_data = base64.standard_b64decode(request.json['impl-data'].encode()).decode()
-
-            if impl_language.lower() == "openqasm":
-                circuit = implementation_handler.prepare_code_from_qasm(impl_data)
-            else:
-                circuit = implementation_handler.prepare_code_from_data(impl_data, input_params)
-
-            if not circuit:
-                app.logger.warn(f"{short_impl_name} not found.")
-                abort(404)
-
-        except Exception as e:
-            app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
-            return jsonify({'error': str(e)}), 200
-    else:
-        app.logger.warn("No implementation specified.")
+    try:
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data,impl_language, input_params)
+    except ValueError:
         abort(400)
+    except Exception as e:
+        app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+
+    if not circuit:
+        app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: Failed to create circuit.")
+        return jsonify({'error': "Failed to create circuit."}), 400
 
     # Identify the backend given provider and qpu name
     backend = get_backend(provider, qpu_name)
@@ -109,7 +82,7 @@ def transpile_circuit():
             return jsonify({'error': 'too many qubits required'}), 200
 
         except Exception as e:
-            app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
+            app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}: {str(e)}")
             abort(500)
 
     # After compilation the circuit should be valid
@@ -117,16 +90,17 @@ def transpile_circuit():
         app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
         abort(500)
 
-    # convert the circuit to QASM string
-    circuit_qasm = get_circuit_qasm(circuit)
+    response = prepare_transpile_response(circuit, provider)
 
     # get statistics about the compiled circuit
     width = circuit.n_qubits
     depth = get_depth_without_barrier(circuit)
 
-    app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: w={width} d={depth}")
-    return jsonify({'depth': depth, 'width': width, 'transpiled-qasm': circuit_qasm}), 200
+    response['width'] = width
+    response['depth'] = depth
 
+    app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: w={width} d={depth}")
+    return jsonify(response), 200
 
 @app.route('/pytket-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():
