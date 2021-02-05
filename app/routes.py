@@ -115,13 +115,15 @@ def execute_circuit():
     impl_language = request.json.get("impl-language")
     impl_data = request.json.get('impl-data')
     transpiled_qasm = request.json.get('transpiled-qasm')
+    transpiled_quil = request.json.get('transpiled-quil')
 
     input_params = request.json.get('input-params', "")
     input_params = parameters.ParameterDictionary(input_params)
     shots = request.json.get('shots', 1024)
 
     job = app.execute_queue.enqueue('app.tasks.execute', impl_url=impl_url, impl_data=impl_data,
-                                    transpiled_qasm=transpiled_qasm, qpu_name=qpu_name,
+                                    transpiled_qasm=transpiled_qasm,
+                                    transpiled_quil=transpiled_quil, qpu_name=qpu_name,
                                     input_params=input_params, shots=shots, provider=provider,
                                     impl_language=impl_language)
     result = Result(id=job.get_id())

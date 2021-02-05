@@ -4,6 +4,8 @@ from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, g
 from app.result_model import Result
 import json
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
+from pyquil import Program as PyQuilProgram
+from pytket.pyquil import pyquil_to_tk
 
 def convert_counts_to_json(counts):
 
@@ -32,7 +34,7 @@ def rename_qreg_lowercase(circuit, *regs):
     return circuit_from_qasm_str(qasm)
 
 
-def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_name, impl_language, shots):
+def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name, impl_language, shots):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
 
@@ -43,7 +45,7 @@ def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_na
     # Get the backend
     backend = get_backend(provider, qpu_name)
 
-    if not transpiled_qasm:
+    if not transpiled_qasm and not transpiled_quil:
         # Transpile the circuit for the backend
         try:
             circuit = tket_transpile_circuit(circuit,
@@ -64,7 +66,7 @@ def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_na
                 result.complete = True
                 db.session.commit()
                 return
-    else:
+    elif transpiled_qasm:
         circuit = circuit_from_qasm_str(transpiled_qasm)
 
         if not backend.valid_circuit(circuit):
@@ -73,6 +75,17 @@ def execute(impl_url, impl_data, transpiled_qasm, input_params, provider, qpu_na
             result.complete = True
             db.session.commit()
             return
+    elif transpiled_quil:
+        circuit = pyquil_to_tk(PyQuilProgram(transpiled_quil))
+        backend.compile_circuit(circuit, optimisation_level= 0)
+
+        if not backend.valid_circuit(circuit):
+            result = Result.query.get(job.get_id())
+            result.result = json.dumps({'error': "transpiled Quil doesn't meet QPU requirements"})
+            result.complete = True
+            db.session.commit()
+            return
+
 
     # Rename registers to lower case
     register_names = set(map(lambda q: q.reg_name, circuit.qubits))
