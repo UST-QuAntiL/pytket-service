@@ -6,6 +6,8 @@ import json
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 from pyquil import Program as PyQuilProgram
 from pytket.pyquil import pyquil_to_tk
+from pytket.predicates import ConnectivityPredicate
+from pytket.passes import DefaultMappingPass
 
 def convert_counts_to_json(counts):
 
@@ -77,7 +79,13 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
             return
     elif transpiled_quil:
         circuit = pyquil_to_tk(PyQuilProgram(transpiled_quil))
-        backend.compile_circuit(circuit, optimisation_level= 0)
+
+        missed_predicates = list(filter(lambda p : not p.verify(circuit), backend.required_predicates))
+        if len(missed_predicates) == 1 and isinstance(missed_predicates[0], ConnectivityPredicate):
+
+            # Quil doesn't persist the name of the mapped QPU nodes
+            # use a default mapping to restore it
+            DefaultMappingPass(backend.device).apply(circuit)
 
         if not backend.valid_circuit(circuit):
             result = Result.query.get(job.get_id())
