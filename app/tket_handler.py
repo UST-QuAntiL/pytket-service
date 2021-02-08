@@ -3,7 +3,7 @@ import os
 
 from pytket.qiskit import qiskit_to_tk, tk_to_qiskit
 from pytket.cirq import cirq_to_tk, tk_to_cirq
-from pytket.pyquil import pyquil_to_tk
+from pytket.pyquil import pyquil_to_tk, tk_to_pyquil
 from pytket.backends.ibm import IBMQBackend, AerBackend, NoIBMQAccountError
 from pytket.backends.braket import BraketBackend
 from app.forest_backend import ForestBackend
@@ -20,6 +20,16 @@ import qiskit.circuit.library as qiskit_gates
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5666)
+
+
+def prepare_transpile_response(circuit, provider):
+    if provider.lower() in ['rigetti']:
+        transpiled_quil = tk_to_pyquil(circuit)
+        return {'transpiled-quil': str(transpiled_quil)}
+    else:
+        # convert the circuit to QASM string
+        transpiled_qasm = get_circuit_qasm(circuit)
+        return {'transpiled-qasm': transpiled_qasm}
 
 def get_depth_without_barrier(circuit):
     """
@@ -60,7 +70,7 @@ def get_circuit_conversion_for(impl_language):
     if impl_language.lower() == "cirq":
         return cirq_to_tk
 
-    if impl_language.lower() == "pyquil":
+    if impl_language.lower() in ["pyquil", "quil"]:
         return pyquil_to_tk
 
     if impl_language.lower() == "openqasm":
