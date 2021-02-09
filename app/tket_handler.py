@@ -25,11 +25,11 @@ qvm_port = os.environ.get('QVM_PORT', default=5666)
 def prepare_transpile_response(circuit, provider):
     if provider.lower() in ['rigetti']:
         transpiled_quil = tk_to_pyquil(circuit)
-        return {'transpiled-quil': str(transpiled_quil)}
+        return {'transpiled-quil': str(transpiled_quil), 'language': "Quil"}
     else:
         # convert the circuit to QASM string
         transpiled_qasm = get_circuit_qasm(circuit)
-        return {'transpiled-qasm': transpiled_qasm}
+        return {'transpiled-qasm': transpiled_qasm, 'language': "OpenQASM"}
 
 def get_depth_without_barrier(circuit):
     """
