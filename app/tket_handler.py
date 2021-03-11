@@ -201,5 +201,6 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
     return circuit
 
 def get_circuit_qasm(circuit):
-    return circuit_to_qasm_str(circuit)
+    # Use Qiskit to export QASM since the PyTket's internal method has problems mapping V-Gates
+    return tk_to_qiskit(circuit).qasm()
 
