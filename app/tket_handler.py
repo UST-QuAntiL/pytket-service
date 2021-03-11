@@ -1,14 +1,14 @@
 import re
 import os
 
-from pytket.qiskit import qiskit_to_tk, tk_to_qiskit
-from pytket.cirq import cirq_to_tk, tk_to_cirq
-from pytket.pyquil import pyquil_to_tk, tk_to_pyquil
-from pytket.backends.ibm import IBMQBackend, AerBackend, NoIBMQAccountError
-from pytket.backends.braket import BraketBackend
+from pytket.extensions.qiskit import qiskit_to_tk, tk_to_qiskit
+from pytket.extensions.cirq import cirq_to_tk, tk_to_cirq
+from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
+from pytket.extensions.qiskit import IBMQBackend, AerBackend, NoIBMQAccountError
+from pytket.extensions.braket import BraketBackend
 from app.forest_backend import ForestBackend
 from pyquil.api import ForestConnection
-from pytket.circuit import Circuit as TKCircuit
+from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 from flask import abort

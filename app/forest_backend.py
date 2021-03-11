@@ -1,9 +1,9 @@
 
-from pytket.backends.forest import ForestBackend as BaseForestBackend
+from pytket.extensions.pyquil import ForestBackend as BaseForestBackend
 from pytket.backends import Backend
 from pytket.backends.resulthandle import ResultHandle
 from pytket.device import Device
-from pytket.pyquil import process_characterisation
+from pytket.extensions.pyquil import process_characterisation
 from pytket.routing import Architecture
 from pyquil import get_qc
 from pyquil.api import QuantumComputer, ForestConnection

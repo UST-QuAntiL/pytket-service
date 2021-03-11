@@ -5,7 +5,7 @@ from app.result_model import Result
 import json
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
 from pyquil import Program as PyQuilProgram
-from pytket.pyquil import pyquil_to_tk
+from pytket.extensions.pyquil import pyquil_to_tk
 from pytket.predicates import ConnectivityPredicate
 from pytket.passes import DefaultMappingPass
 
