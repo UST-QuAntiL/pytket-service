@@ -2,10 +2,8 @@ import re
 import os
 
 from pytket.extensions.qiskit import qiskit_to_tk, tk_to_qiskit
-from pytket.extensions.cirq import cirq_to_tk, tk_to_cirq
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
 from pytket.extensions.qiskit import IBMQBackend, AerBackend, NoIBMQAccountError
-from pytket.extensions.braket import BraketBackend
 from app.forest_backend import ForestBackend
 from pyquil.api import ForestConnection
 from pytket import Circuit as TKCircuit
@@ -67,9 +65,6 @@ def get_circuit_conversion_for(impl_language):
     if impl_language.lower() == "qiskit":
         return qiskit_to_tk
 
-    if impl_language.lower() == "cirq":
-        return cirq_to_tk
-
     if impl_language.lower() in ["pyquil", "quil"]:
         return pyquil_to_tk
 
@@ -92,10 +87,6 @@ def get_backend(provider, qpu):
             return IBMQBackend(qpu)
         except NoIBMQAccountError as e:
             return None
-
-    if provider.lower() == "braket":
-        # TODO: error handling ???
-        return BraketBackend(device= qpu)
 
     if provider.lower() == "rigetti":
 

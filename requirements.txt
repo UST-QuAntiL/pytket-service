@@ -13,6 +13,4 @@ Werkzeug==1.0.1
 gunicorn
 pytket==0.8.0
 pytket-qiskit==0.8.0
-pytket-cirq==0.8.0
-pytket-braket==0.4.0
 pytket-pyquil==0.8.0
