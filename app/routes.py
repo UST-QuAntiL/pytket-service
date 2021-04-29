@@ -1,13 +1,11 @@
 from app import app, implementation_handler, db, parameters
 from app.result_model import Result
-from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, prepare_transpile_response
-from qiskit import IBMQ
-import pytket
+from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, \
+    UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, prepare_transpile_response
 
 from flask import jsonify, abort, request
 import logging
 import json
-import re
 import base64
 
 
@@ -31,10 +29,11 @@ def transpile_circuit():
     short_impl_name = ""
 
     impl_url = request.json['impl-url'] if 'impl-url' in request.json else None
-    impl_data = base64.standard_b64decode(request.json['impl-data'].encode()).decode() if 'impl-data' in request.json else None
+    impl_data = base64.standard_b64decode(
+        request.json['impl-data'].encode()).decode() if 'impl-data' in request.json else None
 
     try:
-        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data,impl_language, input_params)
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params)
     except ValueError:
         abort(400)
     except Exception as e:
@@ -76,7 +75,7 @@ def transpile_circuit():
                 app.logger.warn(f"Precompiling {short_impl_name} failed.")
                 break
 
-        except TooManyQubitsException as e:
+        except TooManyQubitsException:
             # Too many qubits required for the provided backend
             app.logger.info(f"Transpile {short_impl_name} for {qpu_name}: too many qubits required")
             return jsonify({'error': 'too many qubits required'}), 200
@@ -101,6 +100,7 @@ def transpile_circuit():
 
     app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: w={width} d={depth}")
     return jsonify(response), 200
+
 
 @app.route('/pytket-service/api/v1.0/execute', methods=['POST'])
 def execute_circuit():

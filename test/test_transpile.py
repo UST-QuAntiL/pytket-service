@@ -3,15 +3,12 @@ import os
 from app.config import basedir
 from app import app, db
 import qiskit
-import json
 import base64
-from qiskit import IBMQ
 
 
 class TranspileTestCase(unittest.TestCase):
 
     def setUp(self):
-
         # setup environment variables for testing
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -25,7 +22,6 @@ class TranspileTestCase(unittest.TestCase):
         db.drop_all()
 
     def test_version(self):
-
         response = self.client.get('/pytket-service/api/v1.0/version')
 
         self.assertEqual(response.status_code, 200)
@@ -34,7 +30,6 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(json_data['version'], "1.0")
 
     def test_transpile_hadamard_simulator_url(self):
-
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
@@ -66,7 +61,6 @@ class TranspileTestCase(unittest.TestCase):
         # print(r.headers.get("Location"))
 
     def test_transpile_hadamard_simulator_file(self):
-
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         with open('data/hadamard.py', 'rb') as f:
@@ -100,7 +94,6 @@ class TranspileTestCase(unittest.TestCase):
         print(r.headers.get("Location"))
 
     def test_transpile_shor_yorktown_file(self):
-
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         with open('data/shor-fix-15.py', 'rb') as f:
@@ -133,7 +126,7 @@ class TranspileTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_url_pyquil(self):         #tket does currently not support the cu1 gate in OpenQASM
+    def test_transpile_shor_yorktown_url_pyquil(self):  # tket does currently not support the cu1 gate in OpenQASM
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
@@ -168,7 +161,6 @@ class TranspileTestCase(unittest.TestCase):
         print(r.headers.get("Location"))
 
     def test_transpile_shor_yorktown_file_pyquil(self):
-
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         with open('data/shor-fix-15-pyquil.py', 'rb') as f:
@@ -237,7 +229,6 @@ class TranspileTestCase(unittest.TestCase):
         print(r.headers.get("Location"))
 
     def test_transpile_shor_ibmq16(self):
-
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
@@ -265,6 +256,7 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("error", json_data)
         self.assertIn("too many qubits required", json_data['error'])
+
 
 if __name__ == "__main__":
     unittest.main()
