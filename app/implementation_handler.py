@@ -33,6 +33,7 @@ def prepare_code(impl_url, impl_data, impl_language, input_params):
 
     return circuit, short_impl_name
 
+
 def prepare_code_from_data(data, input_params):
     """Get implementation code from data. Set input parameters into implementation. Return circuit."""
     temp_dir = tempfile.mkdtemp()
@@ -41,7 +42,7 @@ def prepare_code_from_data(data, input_params):
     with open(os.path.join(temp_dir, "downloaded_code.py"), "w") as f:
         f.write(data)
     sys.path.append(temp_dir)
-    circuit=None
+    circuit = None
     try:
         import downloaded_code
 
@@ -74,8 +75,10 @@ def prepare_code_from_url(url, input_params):
 def prepare_code_from_qasm(qasm):
     return circuit_from_qasm_str(qasm)
 
+
 def prepare_code_from_quil(quil):
     return PyQuilProgram(quil)
+
 
 def prepare_code_from_qasm_url(url):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
@@ -85,6 +88,7 @@ def prepare_code_from_qasm_url(url):
         return None
 
     return prepare_code_from_qasm(impl)
+
 
 def prepare_code_from_quil_url(url):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""

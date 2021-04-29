@@ -9,11 +9,11 @@ from pytket.extensions.pyquil import pyquil_to_tk
 from pytket.predicates import ConnectivityPredicate
 from pytket.passes import DefaultMappingPass
 
-def convert_counts_to_json(counts):
 
+def convert_counts_to_json(counts):
     result = {}
     for bits, count in counts.items():
-        #bitstring = np.binary_repr(bits)
+        # bitstring = np.binary_repr(bits)
         bitstring = "".join([str(b) for b in bits])
         result[bitstring] = int(count)
 
@@ -36,7 +36,8 @@ def rename_qreg_lowercase(circuit, *regs):
     return circuit_from_qasm_str(qasm)
 
 
-def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name, impl_language, shots):
+def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name, impl_language,
+            shots):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
 
@@ -56,7 +57,7 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
                                              backend=backend,
                                              short_impl_name=short_impl_name,
                                              logger=None, precompile_circuit=False)
-        except UnsupportedGateException as e:
+        except UnsupportedGateException:
             circuit = tket_transpile_circuit(circuit,
                                              impl_language=impl_language,
                                              backend=backend,
@@ -74,16 +75,15 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
 
         if not backend.valid_circuit(circuit):
             result = Result.query.get(job.get_id())
-            result.result = json.dumps({'error': "transpiled QASM doesn't meet QPU requirements" })
+            result.result = json.dumps({'error': "transpiled QASM doesn't meet QPU requirements"})
             result.complete = True
             db.session.commit()
             return
     elif transpiled_quil:
         circuit = pyquil_to_tk(PyQuilProgram(transpiled_quil))
 
-        missed_predicates = list(filter(lambda p : not p.verify(circuit), backend.required_predicates))
+        missed_predicates = list(filter(lambda p: not p.verify(circuit), backend.required_predicates))
         if len(missed_predicates) == 1 and isinstance(missed_predicates[0], ConnectivityPredicate):
-
             # Quil doesn't persist the name of the mapped QPU nodes
             # use a default mapping to restore it
             DefaultMappingPass(backend.device).apply(circuit)
@@ -94,7 +94,6 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
             result.complete = True
             db.session.commit()
             return
-
 
     # Rename registers to lower case
     register_names = set(map(lambda q: q.reg_name, circuit.qubits))
@@ -112,4 +111,3 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
     result.result = convert_counts_to_json(counts)
     result.complete = True
     db.session.commit()
-

@@ -28,7 +28,7 @@ class ResultsTestCase(unittest.TestCase):
         db.session.commit()
 
         # Create complete dummy result
-        r = Result(id="1", complete=True, result= """
+        r = Result(id="1", complete=True, result="""
         {
             "text" : "I am complete !"
         }
