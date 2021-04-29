@@ -29,6 +29,7 @@ def prepare_transpile_response(circuit, provider):
         transpiled_qasm = get_circuit_qasm(circuit)
         return {'transpiled-qasm': transpiled_qasm, 'language': "OpenQASM"}
 
+
 def get_depth_without_barrier(circuit):
     """
     Get the depth of the circuit without counting barriers.
@@ -74,6 +75,7 @@ def get_circuit_conversion_for(impl_language):
     # Default if no impl_language matched
     return None
 
+
 def get_backend(provider, qpu):
     """
     Get the backend instance by name
@@ -99,6 +101,7 @@ def get_backend(provider, qpu):
     # Default if no provider matched
     return None
 
+
 def is_tk_circuit(circuit):
     return isinstance(circuit, TKCircuit)
 
@@ -115,6 +118,7 @@ def pretranspile_circuit(circuit, impl_language):
         return pretranspile_qiskit_circuit(circuit)
     else:
         return circuit
+
 
 def pretranspile_qiskit_circuit(circuit):
     """
@@ -161,6 +165,7 @@ class UnsupportedGateException(Exception):
     def __init__(self, gate):
         self.gate = gate
 
+
 class TooManyQubitsException(Exception):
     pass
 
@@ -191,7 +196,7 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
 
     return circuit
 
+
 def get_circuit_qasm(circuit):
-    # Use Qiskit to export QASM since the PyTket's internal method has problems mapping V-Gates
-    return tk_to_qiskit(circuit).qasm()
+    return circuit_to_qasm_str(circuit)
 
