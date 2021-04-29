@@ -57,13 +57,13 @@ def get_backend(provider, qpu):
     :return:
     """
 
-    if provider.lower() == "ibmq":
+    if provider == "IBMQ":
         try:
             return IBMQBackend(qpu)
         except NoIBMQAccountError as e:
             return None
 
-    if provider.lower() == "braket":
+    if provider == "Braket":
         # TODO: error handling ???
         return BraketBackend(device= qpu)
 
