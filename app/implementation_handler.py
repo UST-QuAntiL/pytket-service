@@ -1,24 +1,48 @@
+import urllib
 from urllib import request, error
 import tempfile
 import os, sys, shutil, re
 from importlib import reload
+
+from flask_restful import abort
 from pytket.qasm import circuit_from_qasm_str
 from pyquil import Program as PyQuilProgram
+from urllib3 import HTTPResponse
+
+from app import app
 
 
-def prepare_code(impl_url, impl_data, impl_language, input_params):
+def prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token: str = ""):
 
     if impl_url:
         # Download and execute the implementation
         if impl_language.lower() == "openqasm":
-            short_impl_name = re.match(".*/(?P<file>.*\\.qasm)", impl_url).group('file')
-            circuit = prepare_code_from_qasm_url(impl_url)
+            match = re.match(".*/(?P<file>.*\\.qasm)", impl_url)
+
+            if match is None:
+                short_impl_name = "undefined"
+            else:
+                short_impl_name = match.group('file')
+
+            circuit = prepare_code_from_qasm_url(impl_url, bearer_token)
         elif impl_language.lower() == "quil":
-            short_impl_name = re.match(".*/(?P<file>.*\\.quil)", impl_url).group('file')
-            circuit = prepare_code_from_quil_url(impl_url)
+            match = re.match(".*/(?P<file>.*\\.quil)", impl_url)
+
+            if match is None:
+                short_impl_name = "undefined"
+            else:
+                short_impl_name = match.group('file')
+
+            circuit = prepare_code_from_quil_url(impl_url, bearer_token)
         else:
-            short_impl_name = re.match(".*/(?P<file>.*\\.py)", impl_url).group('file')
-            circuit = prepare_code_from_url(impl_url, input_params)
+            match = re.match(".*/(?P<file>.*\\.py)", impl_url)
+
+            if match is None:
+                short_impl_name = "undefined"
+            else:
+                short_impl_name = match.group('file')
+
+            circuit = prepare_code_from_url(impl_url, input_params, bearer_token)
 
     elif impl_data:
         short_impl_name = "untitled"
@@ -46,6 +70,12 @@ def prepare_code_from_data(data, input_params):
     try:
         import downloaded_code
 
+        # deletes every attribute from downloaded_code, except __name__, because importlib.reload
+        # doesn't reset the module's global variables
+        for attr in dir(downloaded_code):
+            if attr != "__name__":
+                delattr(downloaded_code, attr)
+
         reload(downloaded_code)
         if 'get_circuit' in dir(downloaded_code):
             circuit = downloaded_code.get_circuit(**input_params)
@@ -61,10 +91,10 @@ def prepare_code_from_data(data, input_params):
     return circuit
 
 
-def prepare_code_from_url(url, input_params):
+def prepare_code_from_url(url, input_params, bearer_token: str = ""):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
-        impl = request.urlopen(url).read().decode("utf-8")
+        impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
@@ -80,21 +110,53 @@ def prepare_code_from_quil(quil):
     return PyQuilProgram(quil)
 
 
-def prepare_code_from_qasm_url(url):
+def prepare_code_from_qasm_url(url, bearer_token: str = ""):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
-        impl = request.urlopen(url).read().decode("utf-8")
+        impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
     return prepare_code_from_qasm(impl)
 
 
-def prepare_code_from_quil_url(url):
+def prepare_code_from_quil_url(url, bearer_token: str = ""):
     """Get implementation code from URL. Set input parameters into implementation. Return circuit."""
     try:
-        impl = request.urlopen(url).read().decode("utf-8")
+        impl = _download_code(url, bearer_token)
     except (error.HTTPError, error.URLError):
         return None
 
     return prepare_code_from_quil(impl)
+
+
+def _download_code(url: str, bearer_token: str = "") -> str:
+    req = request.Request(url)
+
+    if urllib.parse.urlparse(url).netloc == "platform.planqk.de":
+        if bearer_token == "":
+            app.logger.error("No bearer token specified, download from the PlanQK platform will fail.")
+
+            abort(401)
+        elif bearer_token.startswith("Bearer"):
+            app.logger.error("The bearer token MUST NOT start with \"Bearer\".")
+
+            abort(401)
+
+        req.add_header("Authorization", "Bearer " + bearer_token)
+
+    try:
+        res: HTTPResponse = request.urlopen(req)
+    except Exception as e:
+        app.logger.error("Could not open url: " + str(e))
+
+        if str(e).find("401") != -1:
+            abort(401)
+
+    if res.getcode() == 200 and urllib.parse.urlparse(url).netloc == "platform.planqk.de":
+        app.logger.info("Request to platform.planqk.de was executed successfully.")
+
+    if res.getcode() == 401:
+        abort(401)
+
+    return res.read().decode("utf-8")

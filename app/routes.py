@@ -32,8 +32,10 @@ def transpile_circuit():
     impl_data = base64.standard_b64decode(
         request.json['impl-data'].encode()).decode() if 'impl-data' in request.json else None
 
+    bearer_token = request.json.get("bearer-token", "")
+
     try:
-        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params)
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
     except ValueError:
         abort(400)
     except Exception as e:
@@ -112,6 +114,7 @@ def execute_circuit():
     qpu_name = request.json['qpu-name']
 
     impl_url = request.json.get('impl-url')
+    bearer_token = request.json.get("bearer-token", "")
     impl_language = request.json.get("impl-language")
     impl_data = request.json.get('impl-data')
     transpiled_qasm = request.json.get('transpiled-qasm')
@@ -125,7 +128,7 @@ def execute_circuit():
                                     transpiled_qasm=transpiled_qasm,
                                     transpiled_quil=transpiled_quil, qpu_name=qpu_name,
                                     input_params=input_params, shots=shots, provider=provider,
-                                    impl_language=impl_language)
+                                    impl_language=impl_language, bearer_token=bearer_token)
     result = Result(id=job.get_id())
     db.session.add(result)
     db.session.commit()

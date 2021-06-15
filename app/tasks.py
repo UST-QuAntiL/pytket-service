@@ -37,7 +37,7 @@ def rename_qreg_lowercase(circuit, *regs):
 
 
 def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name, impl_language,
-            shots):
+            shots, bearer_token: str = ""):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
 
@@ -48,7 +48,7 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
 
     if not transpiled_qasm and not transpiled_quil:
 
-        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params)
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
 
         # Transpile the circuit for the backend
         try:
