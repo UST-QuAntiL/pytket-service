@@ -18,6 +18,8 @@ import qiskit.circuit.library as qiskit_gates
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5666)
+quilc_hostname = os.environ.get("QUILC_HOSTNAME", default="localhost")
+quilc_port = os.environ.get("QUILC_PORT", default=5667)
 
 
 def prepare_transpile_response(circuit, provider):
@@ -92,7 +94,8 @@ def get_backend(provider, qpu):
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
         connection = ForestConnection(
-            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}")
+            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}",
+            compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
 
         return ForestBackend(qpu, simulator=True, connection=connection)
 
