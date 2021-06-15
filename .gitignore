@@ -1,6 +1,5 @@
 __pycache__
 *.pyc
-migrations
 app/data/app.db
 .idea/
 .DS_Store
