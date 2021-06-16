@@ -16,7 +16,7 @@ docker-compose pull
 docker-compose up
 ```
 
-Now the pytket-service is available on http://localhost:5001/.
+Now the pytket-service is available on http://localhost:5015/.
 
 ## After implementation changes
 * Update container:
