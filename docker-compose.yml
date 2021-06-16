@@ -63,14 +63,6 @@ services:
     networks:
       - default
 
-  rigetti-quilc:
-    image: rigetti/quilc
-    ports:
-      - "5667:5667"
-    command: -S -p 5667
-    networks:
-      - default
-
 networks:
   default:
     driver: bridge
