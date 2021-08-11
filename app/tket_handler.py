@@ -17,9 +17,9 @@ import qiskit.circuit.library as qiskit_gates
 
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
-qvm_port = os.environ.get('QVM_PORT', default=5666)
+qvm_port = os.environ.get('QVM_PORT', default=5016)
 quilc_hostname = os.environ.get("QUILC_HOSTNAME", default="localhost")
-quilc_port = os.environ.get("QUILC_PORT", default=5667)
+quilc_port = os.environ.get("QUILC_PORT", default=5017)
 
 
 def prepare_transpile_response(circuit, provider):
