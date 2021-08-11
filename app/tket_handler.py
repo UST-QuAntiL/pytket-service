@@ -199,3 +199,38 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
 
 def get_circuit_qasm(circuit):
     return circuit_to_qasm_str(circuit)
+
+
+def get_number_of_multi_qubit_gates(circuit):
+    number_of_multi_qubit_gates = circuit.n_gates_of_type(OpType.CX) + \
+                                  circuit.n_gates_of_type(OpType.CY) + \
+                                  circuit.n_gates_of_type(OpType.CZ) + \
+                                  circuit.n_gates_of_type(OpType.CH) + \
+                                  circuit.n_gates_of_type(OpType.CV) + \
+                                  circuit.n_gates_of_type(OpType.CVdg) + \
+                                  circuit.n_gates_of_type(OpType.CRx) + \
+                                  circuit.n_gates_of_type(OpType.CRy) + \
+                                  circuit.n_gates_of_type(OpType.CRz) + \
+                                  circuit.n_gates_of_type(OpType.CU1) + \
+                                  circuit.n_gates_of_type(OpType.CU3) + \
+                                  circuit.n_gates_of_type(OpType.CCX) + \
+                                  circuit.n_gates_of_type(OpType.ECR) + \
+                                  circuit.n_gates_of_type(OpType.SWAP) + \
+                                  circuit.n_gates_of_type(OpType.CSWAP) + \
+                                  circuit.n_gates_of_type(OpType.BRIDGE) + \
+                                  circuit.n_gates_of_type(OpType.Unitary2qBox) + \
+                                  circuit.n_gates_of_type(OpType.Unitary3qBox) + \
+                                  circuit.n_gates_of_type(OpType.ExpBox) + \
+                                  circuit.n_gates_of_type(OpType.QControlBox) + \
+                                  circuit.n_gates_of_type(OpType.ISWAP) + \
+                                  circuit.n_gates_of_type(OpType.PhasedISWAP) + \
+                                  circuit.n_gates_of_type(OpType.XXPhase) + \
+                                  circuit.n_gates_of_type(OpType.YYPhase) + \
+                                  circuit.n_gates_of_type(OpType.CnRy) + \
+                                  circuit.n_gates_of_type(OpType.CnX) + \
+                                  circuit.n_gates_of_type(OpType.ZZMax) + \
+                                  circuit.n_gates_of_type(OpType.ESWAP) + \
+                                  circuit.n_gates_of_type(OpType.FSim) + \
+                                  circuit.n_gates_of_type(OpType.ISWAPMax)
+
+    return number_of_multi_qubit_gates
