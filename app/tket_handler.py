@@ -234,3 +234,37 @@ def get_number_of_multi_qubit_gates(circuit):
                                   circuit.n_gates_of_type(OpType.ISWAPMax)
 
     return number_of_multi_qubit_gates
+
+
+def get_multi_qubit_gate_depth(circuit):
+    multi_qubit_gate_depth = circuit.depth_by_type({OpType.CX,
+                                                    OpType.CY,
+                                                    OpType.CZ,
+                                                    OpType.CH,
+                                                    OpType.CV,
+                                                    OpType.CVdg,
+                                                    OpType.CRx,
+                                                    OpType.CRy,
+                                                    OpType.CRz,
+                                                    OpType.CU1,
+                                                    OpType.CU3,
+                                                    OpType.CCX,
+                                                    OpType.ECR,
+                                                    OpType.SWAP,
+                                                    OpType.CSWAP,
+                                                    OpType.BRIDGE,
+                                                    OpType.Unitary2qBox,
+                                                    OpType.Unitary3qBox,
+                                                    OpType.ExpBox,
+                                                    OpType.QControlBox,
+                                                    OpType.ISWAP,
+                                                    OpType.PhasedISWAP,
+                                                    OpType.XXPhase,
+                                                    OpType.YYPhase,
+                                                    OpType.CnRy,
+                                                    OpType.CnX,
+                                                    OpType.ZZMax,
+                                                    OpType.ESWAP,
+                                                    OpType.FSim,
+                                                    OpType.ISWAPMax})
+    return multi_qubit_gate_depth

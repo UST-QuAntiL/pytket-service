@@ -2,7 +2,7 @@ from app import app, implementation_handler, db, parameters
 from app.result_model import Result
 from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, \
     UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, prepare_transpile_response, \
-    get_number_of_multi_qubit_gates
+    get_number_of_multi_qubit_gates, get_multi_qubit_gate_depth
 
 from flask import jsonify, abort, request
 import logging
@@ -97,17 +97,20 @@ def transpile_circuit():
     # get statistics about the compiled circuit
     width = circuit.n_qubits
     depth = get_depth_without_barrier(circuit)
+    multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
     total_number_of_gates = circuit.n_gates
     number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
 
     response['width'] = width
     response['depth'] = depth
+    response['multi-qubit-gate-depth'] = multi_qubit_gate_depth
     response['number-of-gates'] = total_number_of_gates
     response['number-of-multi-qubit-gates'] = number_of_multi_qubit_gates
 
     app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: "
                     f"w={width}, "
                     f"d={depth}, "
+                    f"mutli qubit gate depth={multi_qubit_gate_depth}"
                     f"number of gates={total_number_of_gates}, "
                     f"number of multi qubit gates={number_of_multi_qubit_gates}")
     return jsonify(response), 200
