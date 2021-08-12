@@ -1,7 +1,6 @@
 # pytket-service
 
-This service takes a Qiskit, OpenQASM, or PyQuil implementation as data or via an URL and compiles it using the **tket** compiler and returns either its depth, width, and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend. 
-It returns either its resulting depth & width (Transpilation/Compilation Request) or its results (Execution Request) depending on the input data and selected backend.
+This service takes a Qiskit, OpenQASM, or PyQuil implementation as data or via an URL and compiles it using the **tket** compiler and returns either its depth, multi-qubit-gate depth, number of gates, number of multi-qubit gates, width, and the transpiled OpenQASM String (Transpilation Request) or its results (Execution Request) depending on the input data and selected backend. 
 
 ## Setup
 * Clone repository:
@@ -32,7 +31,7 @@ docker-compose up
 ```
 
 ## Transpilation/Compilation Request
-Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
+Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get depth, multi-qubit-gate depth, number of gates, number of multi-qubit gates, and width of the transpiled circuit and the transpiled OpenQASM circuit itself.
 `POST /pytket-service/api/v1.0/transpile`  
 
 #### Transpilation/Compilation via URL
