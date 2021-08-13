@@ -177,8 +177,6 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertGreater(json_data['depth'], 2)
         self.assertGreater(json_data['width'], 3)
-        self.assertIn('transpiled-qasm', json_data)
-        self.assertIsNotNone(json_data.get('transpiled-qasm'))
         self.assertIn("number-of-gates", json_data)
         self.assertIn("number-of-multi-qubit-gates", json_data)
         self.assertIn("multi-qubit-gate-depth", json_data)
