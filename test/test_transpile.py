@@ -53,8 +53,16 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 2)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
+        self.assertGreaterEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
+        self.assertEqual(json_data["number-of-gates"], 5)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
 
         # r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         # self.assertEqual(r.status_code, 202)
@@ -86,14 +94,22 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
-        self.assertEqual(json_data['depth'], 2)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
+        self.assertGreaterEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
+        self.assertEqual(json_data["number-of-gates"], 5)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
 
         r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_file(self):
+    def test_transpile_shor_santiago_file(self):
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         with open('data/shor-fix-15.py', 'rb') as f:
@@ -101,7 +117,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'Qiskit',
-            'qpu-name': "ibmq_5_yorktown",
+            'qpu-name': "ibmq_santiago",
             'provider': "ibmq",
             'input-params': {
                 'token': {
@@ -119,21 +135,29 @@ class TranspileTestCase(unittest.TestCase):
         json_data = response.get_json()
         self.assertIn("width", json_data)
         self.assertIn("depth", json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
         self.assertGreater(json_data['depth'], 2)
         self.assertGreater(json_data['width'], 3)
+        self.assertEqual(json_data["number-of-gates"], 13)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 2)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 2)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
 
         r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_url_pyquil(self):  # tket does currently not support the cu1 gate in OpenQASM
+    def test_transpile_shor_santiago_url_pyquil(self):  # tket does currently not support the cu1 gate in OpenQASM
 
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'impl-url': 'https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/compiler-selection/Shor/shor-fix-15-pyquil.py',
             'impl-language': 'pyquil',
-            'qpu-name': "ibmq_5_yorktown",
+            'qpu-name': "ibmq_santiago",
             'provider': "ibmq",
             'input-params': {
                 'token': {
@@ -155,12 +179,20 @@ class TranspileTestCase(unittest.TestCase):
         self.assertGreater(json_data['width'], 3)
         self.assertIn('transpiled-qasm', json_data)
         self.assertIsNotNone(json_data.get('transpiled-qasm'))
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
+        self.assertEqual(json_data["number-of-gates"], 13)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 2)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 2)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
 
         r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_yorktown_file_pyquil(self):
+    def test_transpile_shor_santiago_file_pyquil(self):
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         with open('data/shor-fix-15-pyquil.py', 'rb') as f:
@@ -168,7 +200,7 @@ class TranspileTestCase(unittest.TestCase):
         request = {
             'impl-data': impl_data,
             'impl-language': 'pyquil',
-            'qpu-name': "ibmq_5_yorktown",
+            'qpu-name': "ibmq_santiago",
             'provider': "ibmq",
             'input-params': {
                 'token': {
@@ -188,12 +220,23 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertGreater(json_data['depth'], 2)
         self.assertGreater(json_data['width'], 3)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertEqual(json_data["number-of-gates"], 13)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 2)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 2)
 
         r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
     def test_transpile_shor_simulator(self):
+        # test fails with version 0.13.0 as a Qiskit ControlledGate is not supported that is contained
+        # in the shor-general implementation
+
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
@@ -223,17 +266,26 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("depth", json_data)
         self.assertGreater(json_data['depth'], 3000)
         self.assertEqual(json_data['width'], 18)
+        self.assertIn('transpiled-qasm', json_data)
+        self.assertIsNotNone(json_data.get('transpiled-qasm'))
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertGreater(json_data["number-of-gates"], 13)
+        self.assertGreater(json_data["number-of-multi-qubit-gates"], 2)
+        self.assertGreater(json_data["multi-qubit-gate-depth"], 2)
 
         r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         self.assertEqual(r.status_code, 202)
         print(r.headers.get("Location"))
 
-    def test_transpile_shor_ibmq16(self):
+    def test_transpile_shor_lima(self):
+        # test failes with version 0.13.0, same reason as for test_transpile_shor_simulator()
         # prepare the request
         token = qiskit.IBMQ.stored_account()['token']
         request = {
             'impl-url': "https://raw.githubusercontent.com/PlanQK/qiskit-service/master/test/data/shor_general_qiskit.py",
-            'qpu-name': "ibmq_16_melbourne",
+            'qpu-name': "ibmq_lima",
             'impl-language': "qiskit",
             'provider': 'ibmq',
             'input-params': {
