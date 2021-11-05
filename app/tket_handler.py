@@ -287,3 +287,7 @@ def get_multi_qubit_gate_depth(circuit):
                                                     OpType.FSim,
                                                     OpType.ISWAPMax})
     return multi_qubit_gate_depth
+
+
+def get_number_of_measurement_operations(circuit):
+    return circuit.n_gates_of_type(OpType.Measure)

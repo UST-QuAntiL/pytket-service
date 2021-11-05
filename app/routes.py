@@ -21,7 +21,7 @@ from app import app, implementation_handler, db, parameters
 from app.result_model import Result
 from app.tket_handler import get_backend, is_tk_circuit, setup_credentials, tket_transpile_circuit, \
     UnsupportedGateException, TooManyQubitsException, get_depth_without_barrier, prepare_transpile_response, \
-    get_number_of_multi_qubit_gates, get_multi_qubit_gate_depth
+    get_number_of_multi_qubit_gates, get_multi_qubit_gate_depth, get_number_of_measurement_operations
 
 from flask import jsonify, abort, request
 import logging
@@ -117,21 +117,28 @@ def transpile_circuit():
     width = circuit.n_qubits
     depth = get_depth_without_barrier(circuit)
     multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
-    total_number_of_gates = circuit.n_gates
+    total_number_of_operations = circuit.n_gates
     number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
+    number_of_measurement_operations = get_number_of_measurement_operations(circuit)
+    number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates \
+                                   - number_of_measurement_operations
 
     response['width'] = width
     response['depth'] = depth
     response['multi-qubit-gate-depth'] = multi_qubit_gate_depth
-    response['number-of-gates'] = total_number_of_gates
+    response['total-number-of-operations'] = total_number_of_operations
+    response['number-of-single-qubit-gates'] = number_of_single_qubit_gates
     response['number-of-multi-qubit-gates'] = number_of_multi_qubit_gates
+    response['number-of-measurement-operations'] = number_of_measurement_operations
 
     app.logger.info(f"Transpiled {short_impl_name} for {qpu_name}: "
                     f"w={width}, "
                     f"d={depth}, "
                     f"mutli qubit gate depth={multi_qubit_gate_depth}"
-                    f"number of gates={total_number_of_gates}, "
-                    f"number of multi qubit gates={number_of_multi_qubit_gates}")
+                    f"total number of operations={total_number_of_operations}, "
+                    f"number of single qubit gates={number_of_single_qubit_gates}, "
+                    f"number of multi qubit gates={number_of_multi_qubit_gates}, "
+                    f"number of measurement operations={number_of_measurement_operations}")
     return jsonify(response), 200
 
 
