@@ -167,7 +167,7 @@ def execute_circuit():
                                     transpiled_quil=transpiled_quil, qpu_name=qpu_name,
                                     input_params=input_params, shots=shots, provider=provider,
                                     impl_language=impl_language, bearer_token=bearer_token)
-    result = Result(id=job.get_id())
+    result = Result(id=job.get_id(), backend=qpu_name, shots=shots)
     db.session.add(result)
     db.session.commit()
 
@@ -185,7 +185,8 @@ def get_result(result_id):
     result = Result.query.get(result_id)
     if result.complete:
         result_dict = json.loads(result.result)
-        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict}), 200
+        return jsonify({'id': result.id, 'complete': result.complete, 'result': result_dict,
+                        'backend': result.backend, 'shots': result.shots}), 200
     else:
         return jsonify({'id': result.id, 'complete': result.complete}), 200
 

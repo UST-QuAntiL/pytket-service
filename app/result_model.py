@@ -22,6 +22,8 @@ from app import db
 
 class Result(db.Model):
     id = db.Column(db.String(36), primary_key=True)
+    backend = db.Column(db.String(1200), default="")
+    shots = db.Column(db.Integer, default=0)
     result = db.Column(db.String(1200), default="")
     complete = db.Column(db.Boolean, default=False)
 

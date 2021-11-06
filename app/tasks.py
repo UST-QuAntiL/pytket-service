@@ -34,7 +34,8 @@ def convert_counts_to_json(counts):
     for bits, count in counts.items():
         # bitstring = np.binary_repr(bits)
         bitstring = "".join([str(b) for b in bits])
-        result[bitstring] = int(count)
+        # reverse the string to be uniform with IBM Quantum results
+        result[bitstring[::-1]] = int(count)
 
     return json.dumps(result)
 
