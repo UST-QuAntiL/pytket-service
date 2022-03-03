@@ -14,6 +14,7 @@ gunicorn
 pytket==0.13.0
 pytket-qiskit==0.16.1
 pytket-pyquil==0.14.0
+itsdangerous==2.0.1
 
 pyquil~=2.28.0
 numpy~=1.20.1
