@@ -55,7 +55,8 @@ def transpile_circuit():
     bearer_token = request.json.get("bearer-token", "")
 
     try:
-        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params,
+                                                                       bearer_token)
     except ValueError:
         abort(400)
     except Exception as e:
@@ -77,12 +78,20 @@ def transpile_circuit():
     while not is_tk_circuit(circuit) or not backend.valid_circuit(circuit):
 
         try:
-            circuit = tket_transpile_circuit(circuit,
-                                             impl_language=impl_language,
-                                             backend=backend,
-                                             short_impl_name=short_impl_name,
-                                             logger=app.logger.info,
-                                             precompile_circuit=precompiled_circuit)
+            circuit, \
+            non_transpiled_width, \
+            non_transpiled_depth, \
+            non_transpiled_multi_qubit_gate_depth, \
+            non_transpiled_total_number_of_operations, \
+            non_transpiled_number_of_multi_qubit_gates, \
+            non_transpiled_number_of_measurement_operations, \
+            non_transpiled_number_of_single_qubit_gates \
+                = tket_transpile_circuit(circuit,
+                                         impl_language=impl_language,
+                                         backend=backend,
+                                         short_impl_name=short_impl_name,
+                                         logger=app.logger.info,
+                                         precompile_circuit=precompiled_circuit)
 
         except UnsupportedGateException as e:
 
@@ -123,6 +132,13 @@ def transpile_circuit():
     number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates \
                                    - number_of_measurement_operations
 
+    response['non_transpiled_width'] = non_transpiled_width
+    response['non_transpiled_depth'] = non_transpiled_depth
+    response['non_transpiled_multi-qubit-gate-depth'] = non_transpiled_multi_qubit_gate_depth
+    response['non_transpiled_total-number-of-operations'] = non_transpiled_total_number_of_operations
+    response['non_transpiled_number-of-single-qubit-gates'] = non_transpiled_number_of_single_qubit_gates
+    response['non_transpiled_number-of-multi-qubit-gates'] = non_transpiled_number_of_multi_qubit_gates
+    response['non_transpiled_number-of-measurement-operations'] = non_transpiled_number_of_measurement_operations
     response['width'] = width
     response['depth'] = depth
     response['multi-qubit-gate-depth'] = multi_qubit_gate_depth
