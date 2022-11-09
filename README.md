@@ -30,6 +30,17 @@ docker-compose pull
 docker-compose up
 ```
 
+## Analysis of Original Circuit
+ Request an analysis of the original circuit.
+
+ `POST /pytket-service/api/v1.0/analyze-original-circuit`
+ ```
+ {
+     "impl-url": "URL-OF-IMPLEMENTATION",
+     "impl-language": "Qiskit"/"OpenQASM"/"PyQuil",
+ }
+ ```
+
 ## Transpilation/Compilation Request
 Send implementation, input, QPU information, and your IBM Quantum Experience token to the API to get properties of the transpiled circuit and the transpiled OpenQASM circuit itself.
 `POST /pytket-service/api/v1.0/transpile`  

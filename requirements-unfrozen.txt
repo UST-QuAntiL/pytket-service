@@ -1,0 +1,17 @@
+alembic
+click
+Flask
+Flask-Migrate
+Flask-RESTful
+Flask-SQLAlchemy
+qiskit
+redis
+requests
+rq
+SQLAlchemy
+urllib3
+gunicorn
+pytket
+pytket-qiskit
+pytket-pyquil
+pyquil
