@@ -101,13 +101,13 @@ def analyze_original_circuit():
             app.logger.warn(f"Circuit analysis unexpectedly failed for {short_impl_name}: {str(e)}")
             abort(500)
 
-    response = {'non_transpiled_width': non_transpiled_width,
-                'non_transpiled_depth': non_transpiled_depth,
-                'non_transpiled_multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth,
-                'non_transpiled_total-number-of-operations': non_transpiled_total_number_of_operations,
-                'non_transpiled_number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
-                'non_transpiled_number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
-                'non_transpiled_number-of-measurement-operations': non_transpiled_number_of_measurement_operations}
+    response = {'original-width': non_transpiled_width,
+                'original-depth': non_transpiled_depth,
+                'original-multi-qubit-gate-depth': non_transpiled_multi_qubit_gate_depth,
+                'original-total-number-of-operations': non_transpiled_total_number_of_operations,
+                'original-number-of-single-qubit-gates': non_transpiled_number_of_single_qubit_gates,
+                'original-number-of-multi-qubit-gates': non_transpiled_number_of_multi_qubit_gates,
+                'original-number-of-measurement-operations': non_transpiled_number_of_measurement_operations}
 
     return jsonify(response), 200
 
@@ -223,13 +223,13 @@ def transpile_circuit():
     number_of_single_qubit_gates = total_number_of_operations - number_of_multi_qubit_gates \
                                    - number_of_measurement_operations
 
-    response['non_transpiled_width'] = non_transpiled_width
-    response['non_transpiled_depth'] = non_transpiled_depth
-    response['non_transpiled_multi-qubit-gate-depth'] = non_transpiled_multi_qubit_gate_depth
-    response['non_transpiled_total-number-of-operations'] = non_transpiled_total_number_of_operations
-    response['non_transpiled_number-of-single-qubit-gates'] = non_transpiled_number_of_single_qubit_gates
-    response['non_transpiled_number-of-multi-qubit-gates'] = non_transpiled_number_of_multi_qubit_gates
-    response['non_transpiled_number-of-measurement-operations'] = non_transpiled_number_of_measurement_operations
+    response['original-width'] = non_transpiled_width
+    response['original-depth'] = non_transpiled_depth
+    response['original-multi-qubit-gate-depth'] = non_transpiled_multi_qubit_gate_depth
+    response['original-total-number-of-operations'] = non_transpiled_total_number_of_operations
+    response['original-number-of-single-qubit-gates'] = non_transpiled_number_of_single_qubit_gates
+    response['original-number-of-multi-qubit-gates'] = non_transpiled_number_of_multi_qubit_gates
+    response['original-number-of-measurement-operations'] = non_transpiled_number_of_measurement_operations
     response['width'] = width
     response['depth'] = depth
     response['multi-qubit-gate-depth'] = multi_qubit_gate_depth
