@@ -20,11 +20,13 @@
 import re
 import os
 
+import boto3
+from braket.aws.aws_session import AwsSession
+from pytket.extensions.braket import BraketBackend
+from pytket.extensions.braket import braket_to_tk
 from pytket.extensions.qiskit import qiskit_to_tk
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
 from pytket.extensions.qiskit import IBMQBackend, NoIBMQAccountError
-from app.forest_backend import ForestBackend
-from pyquil.api import ForestConnection
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
@@ -34,12 +36,15 @@ from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
+AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'ionq']
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5016)
 quilc_hostname = os.environ.get("QUILC_HOSTNAME", default="localhost")
 quilc_port = os.environ.get("QUILC_PORT", default=5017)
 
+# The AWS Session that will be used to access the AWS Braket service
+aws_session = None
 
 def prepare_transpile_response(circuit, provider):
     if provider.lower() in ['rigetti']:
@@ -67,6 +72,17 @@ def setup_credentials(provider, **kwargs):
         if 'token' in kwargs:
             IBMQ.save_account(token=kwargs['token'], overwrite=True)
             IBMQ.load_account()
+        else:
+            abort(400)
+    if provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
+        if 'token' in kwargs and 'secret_token' in kwargs:
+            boto_session = boto3.Session(
+                aws_access_key_id= kwargs['token'],
+                aws_secret_access_key=kwargs['secret_token'],
+                region_name=kwargs.get('region', 'eu-west-2')
+            )
+            global aws_session
+            aws_session = AwsSession(boto_session)
         else:
             abort(400)
 
@@ -99,6 +115,7 @@ def get_circuit_conversion_for(impl_language):
 def get_backend(provider, qpu):
     """
     Get the backend instance by name
+    Expects for AWS that the setup_credentials method is called before
     :param provider:
     :param qpu:
     :return:
@@ -109,7 +126,9 @@ def get_backend(provider, qpu):
             return IBMQBackend(qpu)
         except NoIBMQAccountError:
             return None
-
+    if aws_session is not None:
+        return BraketBackend(device=qpu, device_type='qpu', provider=provider, aws_session=aws_session)
+    """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
         connection = ForestConnection(
@@ -117,7 +136,7 @@ def get_backend(provider, qpu):
             compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
 
         return ForestBackend(qpu, simulator=True, connection=connection)
-
+    """
     # Default if no provider matched
     return None
 
