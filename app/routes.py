@@ -154,7 +154,7 @@ def transpile_circuit():
     backend = get_backend(provider, qpu_name)
 
     if not backend:
-        app.logger.warn(f"{qpu_name} not found.")
+        app.logger.warning(f"{qpu_name} not found.")
         abort(404)
 
     non_transpiled_width = None
@@ -187,14 +187,14 @@ def transpile_circuit():
         except UnsupportedGateException as e:
 
             # unsupported gate type caused circuit conversion to fail
-            app.logger.warn(f"Unsupported gate ({e.gate}) in implementation {short_impl_name}.")
+            app.logger.warning(f"Unsupported gate ({e.gate}) in implementation {short_impl_name}.")
 
             # precompile the circuit and retry
             if not precompiled_circuit:
                 precompiled_circuit = True
                 continue
             else:
-                app.logger.warn(f"Precompiling {short_impl_name} failed.")
+                app.logger.warning(f"Precompiling {short_impl_name} failed.")
                 break
 
         except TooManyQubitsException:
@@ -203,12 +203,12 @@ def transpile_circuit():
             return jsonify({'error': 'too many qubits required'}), 200
 
         except Exception as e:
-            app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}: {str(e)}")
+            app.logger.warning(f"Circuit compilation unexpectedly failed for {short_impl_name}: {str(e)}")
             abort(500)
 
     # After compilation the circuit should be valid
     if not backend.valid_circuit(circuit):
-        app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
+        app.logger.warning(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
         abort(500)
 
     response = prepare_transpile_response(circuit, provider)

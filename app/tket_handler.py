@@ -26,7 +26,7 @@ from pytket.extensions.braket import BraketBackend
 from pytket.extensions.braket import braket_to_tk
 from pytket.extensions.qiskit import qiskit_to_tk
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
-from pytket.extensions.qiskit import IBMQBackend, NoIBMQAccountError
+from pytket.extensions.qiskit import IBMQBackend
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
@@ -45,6 +45,10 @@ quilc_port = os.environ.get("QUILC_PORT", default=5017)
 
 # The AWS Session that will be used to access the AWS Braket service
 aws_session = None
+aws_qpu_to_region = {
+    'ionq': "us-east-1",
+    'rigetti': "us-west-1"
+}
 
 def prepare_transpile_response(circuit, provider):
     if provider.lower() in ['rigetti']:
@@ -124,10 +128,11 @@ def get_backend(provider, qpu):
     if provider.lower() == "ibmq":
         try:
             return IBMQBackend(qpu)
-        except NoIBMQAccountError:
+        except ValueError:
             return None
     if aws_session is not None:
-        return BraketBackend(device=qpu, device_type='qpu', provider=provider, aws_session=aws_session)
+        backend = BraketBackend(device=qpu, device_type='qpu', provider=provider, region=aws_qpu_to_region[provider], aws_session=aws_session)
+        return backend
     """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
@@ -268,7 +273,8 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
 
     try:
         # Use tket to compile the circuit
-        backend.compile_circuit(circuit, optimisation_level=2)
+        # backend.compile_circuit(circuit, optimisation_level=2) -> Does not exist anymore for pytket backend
+        backend.get_compiled_circuit(circuit, optimisation_level=2)
     except RuntimeError as e:
         if re.match(".* MaxNQubitsPredicate\\([0-9]+\\)", str(e)):
             raise TooManyQubitsException()
