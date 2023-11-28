@@ -21,12 +21,11 @@ import re
 import os
 
 import boto3
+import pytket.extensions.qiskit
 from braket.aws.aws_session import AwsSession
 from pytket.extensions.braket import BraketBackend
-from pytket.extensions.braket import braket_to_tk
-from pytket.extensions.qiskit import qiskit_to_tk
+from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
-from pytket.extensions.qiskit import IBMQBackend
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
@@ -36,7 +35,7 @@ from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
-AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'ionq']
+AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'ionq', 'aws']
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5016)
@@ -47,6 +46,7 @@ quilc_port = os.environ.get("QUILC_PORT", default=5017)
 aws_session = None
 aws_qpu_to_region = {
     'ionq': "us-east-1",
+    'aws': "us-east-1",
     'rigetti': "us-west-1"
 }
 
@@ -74,15 +74,17 @@ def get_depth_without_barrier(circuit):
 def setup_credentials(provider, **kwargs):
     if provider.lower() == "ibmq":
         if 'token' in kwargs:
-            IBMQ.save_account(token=kwargs['token'], overwrite=True)
-            IBMQ.load_account()
+            hub = 'ibm-q'
+            group = 'open'
+            project = 'main'
+            set_ibmq_config(ibmq_api_token=kwargs['token'], instance=f"{hub}/{group}/{project}")
         else:
             abort(400)
     if provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
-        if 'token' in kwargs and 'secret_token' in kwargs:
+        if 'aws-access-key-id' in kwargs and 'aws-secret-access-key' in kwargs:
             boto_session = boto3.Session(
-                aws_access_key_id= kwargs['token'],
-                aws_secret_access_key=kwargs['secret_token'],
+                aws_access_key_id= kwargs['aws-access-key-id'],
+                aws_secret_access_key=kwargs['aws-secret-access-key'],
                 region_name=kwargs.get('region', 'eu-west-2')
             )
             global aws_session
@@ -130,8 +132,13 @@ def get_backend(provider, qpu):
             return IBMQBackend(qpu)
         except ValueError:
             return None
-    if aws_session is not None:
-        backend = BraketBackend(device=qpu, device_type='qpu', provider=provider, region=aws_qpu_to_region[provider], aws_session=aws_session)
+    if aws_session is not None and provider.lower() == "aws":
+        qpu_provider_for_aws = provider
+        if "Aria" in qpu or "Harmony" in qpu:
+            qpu_provider_for_aws = 'ionq'
+        qpu_name_for_request = qpu.replace(" ", "-")
+        backend = BraketBackend(device=qpu_name_for_request, device_type='qpu', provider=qpu_provider_for_aws,
+                                region=aws_qpu_to_region[provider], aws_session=aws_session)
         return backend
     """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
@@ -274,14 +281,14 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
     try:
         # Use tket to compile the circuit
         # backend.compile_circuit(circuit, optimisation_level=2) -> Does not exist anymore for pytket backend
-        backend.get_compiled_circuit(circuit, optimisation_level=2)
+        compiled_circuit = backend.get_compiled_circuit(circuit, optimisation_level=2)
     except RuntimeError as e:
         if re.match(".* MaxNQubitsPredicate\\([0-9]+\\)", str(e)):
             raise TooManyQubitsException()
         else:
             raise e
 
-    return circuit, \
+    return compiled_circuit, \
            non_transpiled_width, \
            non_transpiled_depth, \
            non_transpiled_multi_qubit_gate_depth, \
