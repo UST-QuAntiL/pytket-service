@@ -27,7 +27,7 @@ from app.result_model import Result
 class ResultsTestCase(unittest.TestCase):
 
     def setUp(self):
-        app.app_context().push()
+
         # setup environment variables for testing
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False

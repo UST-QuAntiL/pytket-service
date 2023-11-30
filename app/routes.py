@@ -227,7 +227,7 @@ def transpile_circuit():
     response['width'] = width
     response['depth'] = depth
     response['multi-qubit-gate-depth'] = multi_qubit_gate_depth
-    response['number-of-gates'] = total_number_of_operations
+    response['total-number-of-operations'] = total_number_of_operations
     response['number-of-single-qubit-gates'] = number_of_single_qubit_gates
     response['number-of-multi-qubit-gates'] = number_of_multi_qubit_gates
     response['number-of-measurement-operations'] = number_of_measurement_operations
