@@ -100,11 +100,11 @@ class TranspileTestCase(unittest.TestCase):
             'qpu-name': "Aria-1",
             'provider': "ionq",
             'input-params': {
-                'token': {
+                'aws-access-key-id': {
                     "rawValue": token,
                     "type": "Unknown"
                 },
-                'secret_token': {
+                'aws-secret-access-key': {
                     "rawValue": secret_token,
                     "type": "Unknown"
                 }
