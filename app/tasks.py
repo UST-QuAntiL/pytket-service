@@ -67,9 +67,7 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
     backend = get_backend(provider, qpu_name)
 
     if not transpiled_qasm and not transpiled_quil:
-
         circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
-
         # Transpile the circuit for the backend
         try:
             circuit = tket_transpile_circuit(circuit,
@@ -84,6 +82,8 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
                                              short_impl_name=short_impl_name,
                                              logger=None, precompile_circuit=True)
         finally:
+            # Take circuit out of tuple returned by transpile
+            circuit = circuit[0]
             if not backend.valid_circuit(circuit):
                 result = Result.query.get(job.get_id())
                 result.result = json.dumps({'error': 'execution failed'})

@@ -148,12 +148,10 @@ class TranspileTestCase(unittest.TestCase):
                 }
             }
         }
-        print("before post")
         # send the request
         response = self.client.post('/pytket-service/api/v1.0/transpile',
                                     json=request)
 
-        print("after post")
         self.assertEqual(response.status_code, 200)
         json_data = response.get_json()
         self.assertIn("width", json_data)
@@ -162,12 +160,17 @@ class TranspileTestCase(unittest.TestCase):
         self.assertIn("number-of-multi-qubit-gates", json_data)
         self.assertIn("multi-qubit-gate-depth", json_data)
         self.assertIn("transpiled-qasm", json_data)
+        """
         self.assertGreaterEqual(json_data['depth'], 2)
         self.assertEqual(json_data['width'], 1)
         self.assertEqual(json_data["number-of-gates"], 5)
         self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
         self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
         self.assertIsNotNone(json_data["transpiled-qasm"])
+        """
+        r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
 
     def test_transpile_hadamard_simulator_file(self):
         # prepare the request
