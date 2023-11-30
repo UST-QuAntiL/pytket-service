@@ -157,27 +157,21 @@ def transpile_circuit():
         app.logger.warning(f"{qpu_name} not found.")
         abort(404)
 
-    non_transpiled_width = None
-    non_transpiled_depth = None
-    non_transpiled_multi_qubit_gate_depth = None
-    non_transpiled_total_number_of_operations = None
-    non_transpiled_number_of_multi_qubit_gates = None
-    non_transpiled_number_of_measurement_operations = None
-    non_transpiled_number_of_single_qubit_gates = None
+    non_transpiled_width = circuit.n_qubits
+    non_transpiled_depth = get_depth_without_barrier(circuit)
+    non_transpiled_multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
+    non_transpiled_total_number_of_operations = circuit.n_gates
+    non_transpiled_number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
+    non_transpiled_number_of_measurement_operations = get_number_of_measurement_operations(circuit)
+    non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations \
+                                                  - non_transpiled_number_of_multi_qubit_gates \
+                                                  - non_transpiled_number_of_measurement_operations
 
     precompiled_circuit = False
     while not is_tk_circuit(circuit) or not backend.valid_circuit(circuit):
 
         try:
-            circuit, \
-            non_transpiled_width, \
-            non_transpiled_depth, \
-            non_transpiled_multi_qubit_gate_depth, \
-            non_transpiled_total_number_of_operations, \
-            non_transpiled_number_of_multi_qubit_gates, \
-            non_transpiled_number_of_measurement_operations, \
-            non_transpiled_number_of_single_qubit_gates \
-                = tket_transpile_circuit(circuit,
+            circuit = tket_transpile_circuit(circuit,
                                          impl_language=impl_language,
                                          backend=backend,
                                          short_impl_name=short_impl_name,

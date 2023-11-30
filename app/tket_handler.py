@@ -26,6 +26,7 @@ from braket.aws.aws_session import AwsSession
 from pytket.extensions.braket import BraketBackend
 from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
+from pytket.extensions.ionq import IonQBackend, set_ionq_config
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
@@ -35,7 +36,7 @@ from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
-AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'ionq', 'aws']
+AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'aws']
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5016)
@@ -80,7 +81,12 @@ def setup_credentials(provider, **kwargs):
             set_ibmq_config(ibmq_api_token=kwargs['token'], instance=f"{hub}/{group}/{project}")
         else:
             abort(400)
-    if provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
+    elif provider.lower() == "ionq":
+        if 'token' in kwargs:
+            set_ionq_config(kwargs['token'])
+        else:
+            abort(400)
+    elif provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
         if 'aws-access-key-id' in kwargs and 'aws-secret-access-key' in kwargs:
             boto_session = boto3.Session(
                 aws_access_key_id= kwargs['aws-access-key-id'],
@@ -130,6 +136,11 @@ def get_backend(provider, qpu):
     if provider.lower() == "ibmq":
         try:
             return IBMQBackend(qpu)
+        except ValueError:
+            return None
+    if provider.lower() == "ionq":
+        try:
+            return IonQBackend(qpu)
         except ValueError:
             return None
     if aws_session is not None and provider.lower() == "aws":
