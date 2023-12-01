@@ -140,6 +140,11 @@ def get_backend(provider, qpu):
             return None
     if provider.lower() == "ionq":
         try:
+            qpu = qpu.replace(" ", "-")
+            for backend in IonQBackend.available_devices():
+                if qpu.lower() in backend.device_name.lower():
+                    qpu = backend.device_name.lower()
+                    break
             return IonQBackend(qpu)
         except ValueError:
             return None
