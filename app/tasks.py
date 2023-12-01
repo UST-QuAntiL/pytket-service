@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+from qiskit_ibm_runtime import Sampler
 
 from app import implementation_handler, db
 from rq import get_current_job
@@ -118,6 +119,16 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
     # Rename registers to lower case
     register_names = set(map(lambda q: q.reg_name, circuit.qubits))
     circuit = rename_qreg_lowercase(circuit, *register_names)
+
+    # fix bug in pytket-qiskit by monkey patching
+    original_run = Sampler.run
+
+    def fixed_run(self, **kwargs):
+        kwargs.pop("dynamic", None)  # remove "dynamic" argument, as it is no longer supported
+
+        return original_run(self, **kwargs)
+
+    Sampler.run = fixed_run
 
     # Execute the circuit on the backend
     # validity was checked before
