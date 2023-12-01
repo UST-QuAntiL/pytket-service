@@ -154,30 +154,24 @@ def transpile_circuit():
     backend = get_backend(provider, qpu_name)
 
     if not backend:
-        app.logger.warn(f"{qpu_name} not found.")
+        app.logger.warning(f"{qpu_name} not found.")
         abort(404)
 
-    non_transpiled_width = None
-    non_transpiled_depth = None
-    non_transpiled_multi_qubit_gate_depth = None
-    non_transpiled_total_number_of_operations = None
-    non_transpiled_number_of_multi_qubit_gates = None
-    non_transpiled_number_of_measurement_operations = None
-    non_transpiled_number_of_single_qubit_gates = None
+    non_transpiled_width = circuit.n_qubits
+    non_transpiled_depth = get_depth_without_barrier(circuit)
+    non_transpiled_multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
+    non_transpiled_total_number_of_operations = circuit.n_gates
+    non_transpiled_number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
+    non_transpiled_number_of_measurement_operations = get_number_of_measurement_operations(circuit)
+    non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations \
+                                                  - non_transpiled_number_of_multi_qubit_gates \
+                                                  - non_transpiled_number_of_measurement_operations
 
     precompiled_circuit = False
     while not is_tk_circuit(circuit) or not backend.valid_circuit(circuit):
 
         try:
-            circuit, \
-            non_transpiled_width, \
-            non_transpiled_depth, \
-            non_transpiled_multi_qubit_gate_depth, \
-            non_transpiled_total_number_of_operations, \
-            non_transpiled_number_of_multi_qubit_gates, \
-            non_transpiled_number_of_measurement_operations, \
-            non_transpiled_number_of_single_qubit_gates \
-                = tket_transpile_circuit(circuit,
+            circuit = tket_transpile_circuit(circuit,
                                          impl_language=impl_language,
                                          backend=backend,
                                          short_impl_name=short_impl_name,
@@ -187,14 +181,14 @@ def transpile_circuit():
         except UnsupportedGateException as e:
 
             # unsupported gate type caused circuit conversion to fail
-            app.logger.warn(f"Unsupported gate ({e.gate}) in implementation {short_impl_name}.")
+            app.logger.warning(f"Unsupported gate ({e.gate}) in implementation {short_impl_name}.")
 
             # precompile the circuit and retry
             if not precompiled_circuit:
                 precompiled_circuit = True
                 continue
             else:
-                app.logger.warn(f"Precompiling {short_impl_name} failed.")
+                app.logger.warning(f"Precompiling {short_impl_name} failed.")
                 break
 
         except TooManyQubitsException:
@@ -203,12 +197,12 @@ def transpile_circuit():
             return jsonify({'error': 'too many qubits required'}), 200
 
         except Exception as e:
-            app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}: {str(e)}")
+            app.logger.warning(f"Circuit compilation unexpectedly failed for {short_impl_name}: {str(e)}")
             abort(500)
 
     # After compilation the circuit should be valid
     if not backend.valid_circuit(circuit):
-        app.logger.warn(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
+        app.logger.warning(f"Circuit compilation unexpectedly failed for {short_impl_name}.")
         abort(500)
 
     response = prepare_transpile_response(circuit, provider)

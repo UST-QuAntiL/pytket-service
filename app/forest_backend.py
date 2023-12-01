@@ -22,9 +22,9 @@ from pytket.backends import Backend
 from pytket.backends.resulthandle import ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.pyquil.pyquil_convert import process_characterisation, get_avg_characterisation
-from pytket.routing import Architecture
+from pytket.architecture import Architecture
 from pyquil import get_qc
-from pyquil.api import QuantumComputer, ForestConnection
+from pyquil.api import QuantumComputer #, ForestConnection
 from pytket.circuit import OpType
 
 
@@ -32,7 +32,7 @@ class ForestBackend(BaseForestBackend):
 
     _GATE_SET = {OpType.CZ, OpType.Rx, OpType.Rz, OpType.Measure, OpType.Barrier}
 
-    def __init__(self, qc_name: str, simulator: bool = True, connection: ForestConnection = None):
+    def __init__(self, qc_name: str, simulator: bool = True):
         """Backend for running circuits on a Rigetti QCS device or simulating with the QVM.
 
         :param qc_name: The name of the particular QuantumComputer to use. See the pyQuil docs for more details.
@@ -48,7 +48,7 @@ class ForestBackend(BaseForestBackend):
 
         self._cache = {}
 
-        self._qc: QuantumComputer = get_qc(qc_name, as_qvm=simulator, connection=connection)
+        self._qc: QuantumComputer = get_qc(qc_name, as_qvm=simulator)
         self._characterisation: dict = process_characterisation(self._qc)
         averaged_errors = get_avg_characterisation(self._characterisation)
         self._backend_info: BackendInfo = BackendInfo(

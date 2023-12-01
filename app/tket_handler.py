@@ -20,11 +20,13 @@
 import re
 import os
 
-from pytket.extensions.qiskit import qiskit_to_tk
+import boto3
+import pytket.extensions.qiskit
+from braket.aws.aws_session import AwsSession
+from pytket.extensions.braket import BraketBackend
+from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
-from pytket.extensions.qiskit import IBMQBackend, NoIBMQAccountError
-from app.forest_backend import ForestBackend
-from pyquil.api import ForestConnection
+from pytket.extensions.ionq import IonQBackend, set_ionq_config
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
@@ -34,12 +36,20 @@ from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
+AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'aws']
 # Get environment variables
 qvm_hostname = os.environ.get('QVM_HOSTNAME', default='localhost')
 qvm_port = os.environ.get('QVM_PORT', default=5016)
 quilc_hostname = os.environ.get("QUILC_HOSTNAME", default="localhost")
 quilc_port = os.environ.get("QUILC_PORT", default=5017)
 
+# The AWS Session that will be used to access the AWS Braket service
+aws_session = None
+aws_qpu_to_region = {
+    'ionq': "us-east-1",
+    'aws': "us-east-1",
+    'rigetti': "us-west-1"
+}
 
 def prepare_transpile_response(circuit, provider):
     if provider.lower() in ['rigetti']:
@@ -65,8 +75,26 @@ def get_depth_without_barrier(circuit):
 def setup_credentials(provider, **kwargs):
     if provider.lower() == "ibmq":
         if 'token' in kwargs:
-            IBMQ.save_account(token=kwargs['token'], overwrite=True)
-            IBMQ.load_account()
+            hub = 'ibm-q'
+            group = 'open'
+            project = 'main'
+            set_ibmq_config(ibmq_api_token=kwargs['token'], instance=f"{hub}/{group}/{project}")
+        else:
+            abort(400)
+    elif provider.lower() == "ionq":
+        if 'token' in kwargs:
+            set_ionq_config(kwargs['token'])
+        else:
+            abort(400)
+    elif provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
+        if 'aws-access-key-id' in kwargs and 'aws-secret-access-key' in kwargs:
+            boto_session = boto3.Session(
+                aws_access_key_id= kwargs['aws-access-key-id'],
+                aws_secret_access_key=kwargs['aws-secret-access-key'],
+                region_name=kwargs.get('region', 'eu-west-2')
+            )
+            global aws_session
+            aws_session = AwsSession(boto_session)
         else:
             abort(400)
 
@@ -99,6 +127,7 @@ def get_circuit_conversion_for(impl_language):
 def get_backend(provider, qpu):
     """
     Get the backend instance by name
+    Expects for AWS that the setup_credentials method is called before
     :param provider:
     :param qpu:
     :return:
@@ -107,9 +136,27 @@ def get_backend(provider, qpu):
     if provider.lower() == "ibmq":
         try:
             return IBMQBackend(qpu)
-        except NoIBMQAccountError:
+        except ValueError:
             return None
-
+    if provider.lower() == "ionq":
+        try:
+            qpu = qpu.replace(" ", "-")
+            for backend in IonQBackend.available_devices():
+                if qpu.lower() in backend.device_name.lower():
+                    qpu = backend.device_name.lower()
+                    break
+            return IonQBackend(qpu)
+        except ValueError:
+            return None
+    if aws_session is not None and provider.lower() == "aws":
+        qpu_provider_for_aws = provider
+        if "Aria" in qpu or "Harmony" in qpu:
+            qpu_provider_for_aws = 'ionq'
+        qpu_name_for_request = qpu.replace(" ", "-")
+        backend = BraketBackend(device=qpu_name_for_request, device_type='qpu', provider=qpu_provider_for_aws,
+                                region=aws_qpu_to_region[provider], aws_session=aws_session)
+        return backend
+    """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
         connection = ForestConnection(
@@ -117,7 +164,7 @@ def get_backend(provider, qpu):
             compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
 
         return ForestBackend(qpu, simulator=True, connection=connection)
-
+    """
     # Default if no provider matched
     return None
 
@@ -233,38 +280,21 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
         to_tk = get_circuit_conversion_for(impl_language)
         circuit = to_tk(circuit)
 
-        non_transpiled_width = circuit.n_qubits
-        non_transpiled_depth = get_depth_without_barrier(circuit)
-        non_transpiled_multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
-        non_transpiled_total_number_of_operations = circuit.n_gates
-        non_transpiled_number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
-        non_transpiled_number_of_measurement_operations = get_number_of_measurement_operations(circuit)
-        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations \
-                                                      - non_transpiled_number_of_multi_qubit_gates \
-                                                      - non_transpiled_number_of_measurement_operations
-
     except KeyError as e:
         # unsupported gate type caused circuit conversion to fail
         raise UnsupportedGateException(str(e))
 
     try:
         # Use tket to compile the circuit
-        backend.compile_circuit(circuit, optimisation_level=2)
+        # backend.compile_circuit(circuit, optimisation_level=2) -> Does not exist anymore for pytket backend
+        compiled_circuit = backend.get_compiled_circuit(circuit, optimisation_level=2)
     except RuntimeError as e:
         if re.match(".* MaxNQubitsPredicate\\([0-9]+\\)", str(e)):
             raise TooManyQubitsException()
         else:
             raise e
 
-    return circuit, \
-           non_transpiled_width, \
-           non_transpiled_depth, \
-           non_transpiled_multi_qubit_gate_depth, \
-           non_transpiled_total_number_of_operations, \
-           non_transpiled_number_of_multi_qubit_gates, \
-           non_transpiled_number_of_measurement_operations, \
-           non_transpiled_number_of_single_qubit_gates
-
+    return compiled_circuit
 
 def get_circuit_qasm(circuit):
     return circuit_to_qasm_str(circuit)

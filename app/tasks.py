@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+from qiskit_ibm_runtime import Sampler
 
 from app import implementation_handler, db
 from rq import get_current_job
@@ -67,9 +68,7 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
     backend = get_backend(provider, qpu_name)
 
     if not transpiled_qasm and not transpiled_quil:
-
         circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
-
         # Transpile the circuit for the backend
         try:
             circuit = tket_transpile_circuit(circuit,
@@ -84,6 +83,7 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
                                              short_impl_name=short_impl_name,
                                              logger=None, precompile_circuit=True)
         finally:
+            # Take circuit out of tuple returned by transpile
             if not backend.valid_circuit(circuit):
                 result = Result.query.get(job.get_id())
                 result.result = json.dumps({'error': 'execution failed'})
@@ -118,6 +118,16 @@ def execute(impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params,
     # Rename registers to lower case
     register_names = set(map(lambda q: q.reg_name, circuit.qubits))
     circuit = rename_qreg_lowercase(circuit, *register_names)
+
+    # fix bug in pytket-qiskit by monkey patching
+    original_run = Sampler.run
+
+    def fixed_run(self, **kwargs):
+        kwargs.pop("dynamic", None)  # remove "dynamic" argument, as it is no longer supported
+
+        return original_run(self, **kwargs)
+
+    Sampler.run = fixed_run
 
     # Execute the circuit on the backend
     # validity was checked before

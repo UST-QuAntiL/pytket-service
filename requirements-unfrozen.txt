@@ -12,6 +12,10 @@ SQLAlchemy
 urllib3
 gunicorn
 pytket
+pytket-ionq
 pytket-qiskit
 pytket-pyquil
 pyquil
+pytket-braket
+amazon-braket-sdk
+qiskit-ibmq-provider

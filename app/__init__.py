@@ -23,7 +23,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from redis import Redis
 import rq
-from app import Config
 import logging
 
 app = Flask(__name__)
@@ -33,6 +32,7 @@ migrate = Migrate(app, db)
 
 from app import routes, result_model, errors
 
+app.app_context().push()
 app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
 app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=3600)
 app.logger.setLevel(logging.INFO)

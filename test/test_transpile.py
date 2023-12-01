@@ -28,6 +28,7 @@ import base64
 class TranspileTestCase(unittest.TestCase):
 
     def setUp(self):
+        app.app_context().push()
         # setup environment variables for testing
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -86,6 +87,90 @@ class TranspileTestCase(unittest.TestCase):
         # r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
         # self.assertEqual(r.status_code, 202)
         # print(r.headers.get("Location"))
+
+    def test_transpile_pattern1_2_simulator_url_aws(self):
+        # prepare the request
+        token = ""
+        secret_token = ""
+        with open('data/pattern1-2_0nCliffs10seed1.qasm', 'rb') as f:
+            impl_data = base64.b64encode(f.read()).decode()
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'openqasm',
+            'qpu-name': "Aria-1",
+            'provider': "ionq",
+            'input-params': {
+                'token': {
+                    "rawValue": token,
+                    "type": "Unknown"
+                },
+                'secret_token': {
+                    "rawValue": secret_token,
+                    "type": "Unknown"
+                }
+            }
+        }
+        print("before post")
+        # send the request
+        response = self.client.post('/pytket-service/api/v1.0/transpile',
+                                    json=request)
+
+        print("after post")
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
+        self.assertGreaterEqual(json_data['depth'], 2)
+        self.assertEqual(json_data['width'], 1)
+        self.assertEqual(json_data["number-of-gates"], 5)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
+
+    def test_transpile_pattern1_2_simulator_url_ibmq(self):
+        # prepare the request
+        token = ""
+        with open('data/pattern1-2_0nCliffs10seed1.qasm', 'rb') as f:
+            impl_data = base64.b64encode(f.read()).decode()
+        request = {
+            'impl-data': impl_data,
+            'impl-language': 'openqasm',
+            'qpu-name': "ibmq_qasm_simulator",
+            'provider': "ibmq",
+            'input-params': {
+                'token': {
+                    "rawValue": token,
+                    "type": "Unknown"
+                }
+            }
+        }
+        # send the request
+        response = self.client.post('/pytket-service/api/v1.0/transpile',
+                                    json=request)
+
+        self.assertEqual(response.status_code, 200)
+        json_data = response.get_json()
+        self.assertIn("width", json_data)
+        self.assertIn("depth", json_data)
+        self.assertIn("number-of-gates", json_data)
+        self.assertIn("number-of-multi-qubit-gates", json_data)
+        self.assertIn("multi-qubit-gate-depth", json_data)
+        self.assertIn("transpiled-qasm", json_data)
+        """
+        self.assertGreaterEqual(json_data['depth'], 2)
+        self.assertEqual(json_data['width'], 1)
+        self.assertEqual(json_data["number-of-gates"], 5)
+        self.assertEqual(json_data["number-of-multi-qubit-gates"], 0)
+        self.assertEqual(json_data["multi-qubit-gate-depth"], 0)
+        self.assertIsNotNone(json_data["transpiled-qasm"])
+        """
+        r = self.client.post('/pytket-service/api/v1.0/execute', json=request)
+        self.assertEqual(r.status_code, 202)
+        print(r.headers.get("Location"))
 
     def test_transpile_hadamard_simulator_file(self):
         # prepare the request
