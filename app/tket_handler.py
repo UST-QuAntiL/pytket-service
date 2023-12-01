@@ -280,16 +280,6 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
         to_tk = get_circuit_conversion_for(impl_language)
         circuit = to_tk(circuit)
 
-        non_transpiled_width = circuit.n_qubits
-        non_transpiled_depth = get_depth_without_barrier(circuit)
-        non_transpiled_multi_qubit_gate_depth = get_multi_qubit_gate_depth(circuit)
-        non_transpiled_total_number_of_operations = circuit.n_gates
-        non_transpiled_number_of_multi_qubit_gates = get_number_of_multi_qubit_gates(circuit)
-        non_transpiled_number_of_measurement_operations = get_number_of_measurement_operations(circuit)
-        non_transpiled_number_of_single_qubit_gates = non_transpiled_total_number_of_operations \
-                                                      - non_transpiled_number_of_multi_qubit_gates \
-                                                      - non_transpiled_number_of_measurement_operations
-
     except KeyError as e:
         # unsupported gate type caused circuit conversion to fail
         raise UnsupportedGateException(str(e))
@@ -304,15 +294,7 @@ def tket_transpile_circuit(circuit, impl_language, backend, short_impl_name, log
         else:
             raise e
 
-    return compiled_circuit, \
-           non_transpiled_width, \
-           non_transpiled_depth, \
-           non_transpiled_multi_qubit_gate_depth, \
-           non_transpiled_total_number_of_operations, \
-           non_transpiled_number_of_multi_qubit_gates, \
-           non_transpiled_number_of_measurement_operations, \
-           non_transpiled_number_of_single_qubit_gates
-
+    return compiled_circuit
 
 def get_circuit_qasm(circuit):
     return circuit_to_qasm_str(circuit)
