@@ -27,12 +27,22 @@ import logging
 
 app = Flask(__name__)
 app.config.from_object(Config)
-db = SQLAlchemy(app)
+from sqlalchemy import MetaData
+
+naming_convention = {
+    "ix": 'ix_%(column_0_label)s',
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(column_0_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+}
+db = SQLAlchemy(app, metadata=MetaData(naming_convention=naming_convention))
 migrate = Migrate(app, db)
 
 from app import routes, result_model, errors
 
 app.app_context().push()
 app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
-app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=3600)
+app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=10000)
+app.implementation_queue = rq.Queue('pytket-service_implementation_exe', connection=app.redis, default_timeout=10000)
 app.logger.setLevel(logging.INFO)

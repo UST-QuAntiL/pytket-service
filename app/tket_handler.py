@@ -24,7 +24,7 @@ import boto3
 import pytket.extensions.qiskit
 from braket.aws.aws_session import AwsSession
 from pytket.extensions.braket import BraketBackend
-from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config
+from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config, AerBackend
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
 from pytket.extensions.ionq import IonQBackend, set_ionq_config
 from pytket import Circuit as TKCircuit
@@ -35,6 +35,7 @@ from flask import abort
 from qiskit.compiler import transpile
 from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
+from qiskit_aer import AerSimulator
 
 AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'aws']
 # Get environment variables
@@ -135,6 +136,8 @@ def get_backend(provider, qpu):
 
     if provider.lower() == "ibmq":
         try:
+            if (qpu == 'ibmq_qasm_simulator') or (qpu == 'aer_simulator'):
+                return AerBackend()
             return IBMQBackend(qpu)
         except ValueError:
             return None

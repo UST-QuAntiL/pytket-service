@@ -16,6 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
+import json
+
 
 class ParameterDictionary(dict):
     """
@@ -25,7 +27,9 @@ class ParameterDictionary(dict):
         "String": str,
         "Integer": int,
         "Float": float,
-        "Unknown": str
+        "Unknown": str,
+        "Array": list,
+        "FloatArray": list
     }
 
     """
@@ -42,9 +46,13 @@ class ParameterDictionary(dict):
             return None
 
         try:
-            t = ParameterDictionary.__parameter_types[parameter['type']]
-            value = parameter['rawValue']
-            return t(value)
+            if parameter["type"] == "FloatArray":
+                value = json.loads(parameter['rawValue'])
+                return value
+            else:
+                t = ParameterDictionary.__parameter_types[parameter['type']]
+                value = parameter['rawValue']
+                return t(value)
         except:
             return None
 

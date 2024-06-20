@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020 University of Stuttgart
+#  Copyright (c) 2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -20,14 +20,18 @@
 from app import db
 
 
-class Result(db.Model):
+class Generated_Circuit(db.Model):
     id = db.Column(db.String(36), primary_key=True)
-    backend = db.Column(db.String(1200), default="")
-    shots = db.Column(db.Integer, default=0)
-    result = db.Column(db.String(1200), default="")
+    generated_circuit = db.Column(db.String(1200), default="")
+    input_params = db.Column(db.String(1200), default="")
+    original_depth = db.Column(db.Integer)
+    original_width = db.Column(db.Integer)
+    original_total_number_of_operations = db.Column(db.Integer)
+    original_number_of_multi_qubit_gates = db.Column(db.Integer)
+    original_number_of_measurement_operations = db.Column(db.Integer)
+    original_number_of_single_qubit_gates = db.Column(db.Integer)
+    original_multi_qubit_gate_depth = db.Column(db.Integer)
     complete = db.Column(db.Boolean, default=False)
-    generated_circuit_id = db.Column(db.String(36), db.ForeignKey('generated__circuit.id'), nullable=True)
-    post_processing_result = db.Column(db.String(1200), default="")
 
     def __repr__(self):
-        return 'Result {}'.format(self.result)
+        return 'Generated_Circuit {}'.format(self.generated_circuit)
