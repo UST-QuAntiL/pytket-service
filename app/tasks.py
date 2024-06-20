@@ -16,20 +16,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # ******************************************************************************
-from qiskit_ibm_runtime import Sampler
+import json
 
-from app import implementation_handler, db, app, tket_handler
+from pyquil import Program as PyQuilProgram
+from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
+from pytket.passes import DefaultMappingPass
+from pytket.predicates import ConnectivityPredicate
+from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
+from qiskit_ibm_runtime import Sampler
 from rq import get_current_job
 
+from app import implementation_handler, db, app, tket_handler
 from app.generated_circuit_model import Generated_Circuit
-from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, get_backend, setup_credentials
 from app.result_model import Result
-import json
-from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
-from pyquil import Program as PyQuilProgram
-from pytket.extensions.pyquil import pyquil_to_tk
-from pytket.predicates import ConnectivityPredicate
-from pytket.passes import DefaultMappingPass
+from app.tket_handler import tket_transpile_circuit, UnsupportedGateException, get_backend, setup_credentials, \
+    get_circuit_qasm
 
 
 def convert_counts_to_json(counts):
@@ -62,12 +63,13 @@ def rename_qreg_lowercase(circuit, *regs):
 def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
     app.logger.info("Starting generate task...")
     job = get_current_job()
+    short_impl_name = 'GeneratedCircuit'
 
     generated_circuit_code = None
-    if impl_url:
-        generated_circuit_code = implementation_handler.prepare_code_from_url(impl_url, input_params, bearer_token)
-    elif impl_data:
-        generated_circuit_code = implementation_handler.prepare_code_from_data(impl_data, input_params)
+    if impl_url or impl_data:
+        generated_circuit_code, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data,
+                                                                                      impl_language, input_params,
+                                                                                      bearer_token)
     else:
         generated_circuit_object = Generated_Circuit.query.get(job.get_id())
         generated_circuit_object.generated_circuit = json.dumps({'error': 'generating circuit failed'})
@@ -75,19 +77,15 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
         db.session.commit()
 
     if generated_circuit_code:
-        non_transpiled_depth_old = 0
         generated_circuit_object = Generated_Circuit.query.get(job.get_id())
-        generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
-
-        non_transpiled_depth = generated_circuit_code.depth()
-        while non_transpiled_depth_old < non_transpiled_depth:
-            non_transpiled_depth_old = non_transpiled_depth
-            generated_circuit_code = generated_circuit_code.decompose()
-            non_transpiled_depth = generated_circuit_code.depth()
-
+        if impl_language.lower() == 'pyquil':
+            generated_circuit_object.generated_circuit = str(generated_circuit_code)
+        elif impl_language.lower() == 'qiskit':
+            # convert the circuit to QASM string
+            generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
         generated_circuit_code, generated_circuit_object.original_width, generated_circuit_object.original_depth, generated_circuit_object.original_multi_qubit_gate_depth, generated_circuit_object.original_total_number_of_operations, generated_circuit_object.original_number_of_multi_qubit_gates, generated_circuit_object.original_number_of_measurement_operations, generated_circuit_object.original_number_of_single_qubit_gates = tket_handler.tket_analyze_original_circuit(
-            generated_circuit_code, impl_language=impl_language, short_impl_name="Generated circuit", logger=app.logger.info,
-            precompile_circuit=False)
+            generated_circuit_code, impl_language=impl_language, short_impl_name=short_impl_name,
+            logger=app.logger.info, precompile_circuit=False)
 
         generated_circuit_object.input_params = json.dumps(input_params)
         app.logger.info(f"Received input params for circuit generation: {generated_circuit_object.input_params}")
@@ -95,8 +93,8 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
         db.session.commit()
 
 
-def execute(correlation_id, impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name, impl_language,
-            shots, bearer_token: str = ""):
+def execute(correlation_id, impl_url, impl_data, transpiled_qasm, transpiled_quil, input_params, provider, qpu_name,
+            impl_language, shots, bearer_token: str = ""):
     """Create database entry for result. Get implementation code, prepare it, and execute it. Save result in db"""
     job = get_current_job()
 
@@ -106,20 +104,15 @@ def execute(correlation_id, impl_url, impl_data, transpiled_qasm, transpiled_qui
     backend = get_backend(provider, qpu_name)
 
     if (impl_url or impl_data) and not correlation_id:
-        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params, bearer_token)
+        circuit, short_impl_name = implementation_handler.prepare_code(impl_url, impl_data, impl_language, input_params,
+                                                                       bearer_token)
         # Transpile the circuit for the backend
         try:
-            circuit = tket_transpile_circuit(circuit,
-                                             impl_language=impl_language,
-                                             backend=backend,
-                                             short_impl_name=short_impl_name,
-                                             logger=None, precompile_circuit=False)
+            circuit = tket_transpile_circuit(circuit, impl_language=impl_language, backend=backend,
+                                             short_impl_name=short_impl_name, logger=None, precompile_circuit=False)
         except UnsupportedGateException:
-            circuit = tket_transpile_circuit(circuit,
-                                             impl_language=impl_language,
-                                             backend=backend,
-                                             short_impl_name=short_impl_name,
-                                             logger=None, precompile_circuit=True)
+            circuit = tket_transpile_circuit(circuit, impl_language=impl_language, backend=backend,
+                                             short_impl_name=short_impl_name, logger=None, precompile_circuit=True)
         finally:
             if not backend.valid_circuit(circuit):
                 result = Result.query.get(job.get_id())

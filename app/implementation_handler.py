@@ -117,8 +117,6 @@ def prepare_code_from_url(url, input_params, bearer_token: str = "", post_proces
     except (error.HTTPError, error.URLError):
         return None
 
-    print('SEE THIS THING')
-    print(post_processing)
     if not post_processing:
         circuit = prepare_code_from_data(impl, input_params)
         return circuit
