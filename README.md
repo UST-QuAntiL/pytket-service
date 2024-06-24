@@ -5,8 +5,8 @@ This service takes a Qiskit, OpenQASM, or PyQuil implementation as data or via a
 ## Setup
 * Clone repository:
 ```
-git clone https://github.com/UST-QuAntiL/qiskit-service.git 
-git clone git@github.com:UST-QuAntiL/qiskit-service.git
+git clone https://github.com/UST-QuAntiL/pytket-service.git 
+git clone git@github.com:UST-QuAntiL/pytket-service.git
 ```
 
 * Start containers:
@@ -20,8 +20,8 @@ Now the pytket-service is available on http://localhost:5015/.
 ## After implementation changes
 * Update container:
 ```
-docker build -t planqk/qiskit-service:latest .
-docker push planqk/qiskit-service:latest
+docker build -t planqk/pytket-service:latest .
+docker push planqk/pytket-service:latest
 ```
 
 * Start containers:
@@ -31,7 +31,7 @@ docker-compose up
 ```
 
 ## API Documentation
-The qiskit-service provides a Swagger UI, specifying the request schemas and showcasing exemplary requests for all API endpoints.
+The pytket-service provides a Swagger UI, specifying the request schemas and showcasing exemplary requests for all API endpoints.
 * http://localhost:5013/api/swagger-ui
 
 The OpenAPI specifications are also statically available:
