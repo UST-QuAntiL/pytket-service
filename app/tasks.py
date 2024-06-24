@@ -23,8 +23,8 @@ from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
 from pytket.passes import DefaultMappingPass
 from pytket.predicates import ConnectivityPredicate
 from pytket.qasm import circuit_to_qasm_str, circuit_from_qasm_str
-from qiskit_ibm_runtime import Sampler
 from rq import get_current_job
+from qiskit.qasm2 import dumps
 
 from app import implementation_handler, db, app, tket_handler
 from app.generated_circuit_model import Generated_Circuit
@@ -82,7 +82,7 @@ def generate(impl_url, impl_data, impl_language, input_params, bearer_token):
             generated_circuit_object.generated_circuit = str(generated_circuit_code)
         elif impl_language.lower() == 'qiskit':
             # convert the circuit to QASM string
-            generated_circuit_object.generated_circuit = generated_circuit_code.qasm()
+            generated_circuit_object.generated_circuit = dumps(generated_circuit_code)
         generated_circuit_code, generated_circuit_object.original_width, generated_circuit_object.original_depth, generated_circuit_object.original_multi_qubit_gate_depth, generated_circuit_object.original_total_number_of_operations, generated_circuit_object.original_number_of_multi_qubit_gates, generated_circuit_object.original_number_of_measurement_operations, generated_circuit_object.original_number_of_single_qubit_gates = tket_handler.tket_analyze_original_circuit(
             generated_circuit_code, impl_language=impl_language, short_impl_name=short_impl_name,
             logger=app.logger.info, precompile_circuit=False)
@@ -148,16 +148,6 @@ def execute(correlation_id, impl_url, impl_data, transpiled_qasm, transpiled_qui
     # Rename registers to lower case
     register_names = set(map(lambda q: q.reg_name, circuit.qubits))
     circuit = rename_qreg_lowercase(circuit, *register_names)
-
-    # fix bug in pytket-qiskit by monkey patching
-    original_run = Sampler.run
-
-    def fixed_run(self, **kwargs):
-        kwargs.pop("dynamic", None)  # remove "dynamic" argument, as it is no longer supported
-
-        return original_run(self, **kwargs)
-
-    Sampler.run = fixed_run
 
     # Execute the circuit on the backend
     # validity was checked before

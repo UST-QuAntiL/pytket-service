@@ -21,8 +21,6 @@ blp = Blueprint("Analysis of Original Circuit", __name__, description="Request a
             }''', example={
     "impl-url": "https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py",
     "impl-language": "qiskit",
-	"qpu-name": "aer_simulator",
-    "provider": "ibmq",
     "input-params": {}},
 
 )

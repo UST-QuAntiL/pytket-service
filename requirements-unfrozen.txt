@@ -4,7 +4,7 @@ Flask
 Flask-Migrate
 Flask-RESTful
 Flask-SQLAlchemy
-qiskit
+flask-smorest
 redis
 requests
 rq
@@ -17,5 +17,5 @@ pytket-qiskit
 pytket-pyquil
 pyquil
 pytket-braket
+qiskit
 amazon-braket-sdk
-qiskit-ibmq-provider
