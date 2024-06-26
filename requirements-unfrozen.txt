@@ -11,11 +11,9 @@ rq
 SQLAlchemy
 urllib3
 gunicorn
-pytket
-pytket-ionq
-pytket-qiskit
+pytket==1.29.0
+pytket-qiskit==0.54.1
 pytket-pyquil
-pyquil
 pytket-braket
 qiskit
 amazon-braket-sdk

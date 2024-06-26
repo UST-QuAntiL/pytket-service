@@ -30,7 +30,7 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from app import routes, result_model, errors
+from app import routes, result_model, errors, generated_circuit_model
 from app.controller import register_blueprints
 from flask_smorest import Api
 
