@@ -21,19 +21,17 @@ import re
 import os
 
 import boto3
-import pytket.extensions.qiskit
 from braket.aws.aws_session import AwsSession
 from pytket.extensions.braket import BraketBackend
-from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config
+from pytket.extensions.qiskit import qiskit_to_tk, IBMQBackend, set_ibmq_config, AerBackend
 from pytket.extensions.pyquil import pyquil_to_tk, tk_to_pyquil
-from pytket.extensions.ionq import IonQBackend, set_ionq_config
+# from pytket.extensions.ionq import IonQBackend, set_ionq_config
 from pytket import Circuit as TKCircuit
 from pytket.circuit import OpType
 from pytket.qasm import circuit_to_qasm_str
 from flask import abort
 
 from qiskit.compiler import transpile
-from qiskit import IBMQ
 import qiskit.circuit.library as qiskit_gates
 
 AWS_BRAKET_HOSTED_PROVIDERS = ['rigetti', 'aws']
@@ -81,11 +79,12 @@ def setup_credentials(provider, **kwargs):
             set_ibmq_config(ibmq_api_token=kwargs['token'], instance=f"{hub}/{group}/{project}")
         else:
             abort(400)
-    elif provider.lower() == "ionq":
-        if 'token' in kwargs:
-            set_ionq_config(kwargs['token'])
-        else:
-            abort(400)
+    # Note that IonQ support is depricated, see https://pypi.org/project/pytket-ionq/ #
+    # elif provider.lower() == "ionq":
+    #     if 'token' in kwargs:
+    #         set_ionq_config(kwargs['token'])
+    #     else:
+    #         abort(400)
     elif provider.lower() in AWS_BRAKET_HOSTED_PROVIDERS:
         if 'aws-access-key-id' in kwargs and 'aws-secret-access-key' in kwargs:
             boto_session = boto3.Session(
@@ -135,19 +134,22 @@ def get_backend(provider, qpu):
 
     if provider.lower() == "ibmq":
         try:
+            if (qpu == 'ibmq_qasm_simulator') or (qpu == 'aer_simulator'):
+                return AerBackend()
             return IBMQBackend(qpu)
         except ValueError:
             return None
-    if provider.lower() == "ionq":
-        try:
-            qpu = qpu.replace(" ", "-")
-            for backend in IonQBackend.available_devices():
-                if qpu.lower() in backend.device_name.lower():
-                    qpu = backend.device_name.lower()
-                    break
-            return IonQBackend(qpu)
-        except ValueError:
-            return None
+    # Note that IonQ support is depricated, see https://pypi.org/project/pytket-ionq/ #
+    # if provider.lower() == "ionq":
+    #     try:
+    #         qpu = qpu.replace(" ", "-")
+    #         for backend in IonQBackend.available_devices():
+    #             if qpu.lower() in backend.device_name.lower():
+    #                 qpu = backend.device_name.lower()
+    #                 break
+    #         return IonQBackend(qpu)
+    #     except ValueError:
+    #         return None
     if aws_session is not None and provider.lower() == "aws":
         qpu_provider_for_aws = provider
         if "Aria" in qpu or "Harmony" in qpu:
@@ -156,15 +158,13 @@ def get_backend(provider, qpu):
         backend = BraketBackend(device=qpu_name_for_request, device_type='qpu', provider=qpu_provider_for_aws,
                                 region=aws_qpu_to_region[provider], aws_session=aws_session)
         return backend
-    """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
-        connection = ForestConnection(
-            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}",
-            compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
+        connection = QCSClient(qvm_url=f"http://{qvm_hostname}:{qvm_port}",
+            quilc_url=f"tcp://{quilc_hostname}:{quilc_port}")
 
         return ForestBackend(qpu, simulator=True, connection=connection)
-    """
+
     # Default if no provider matched
     return None
 

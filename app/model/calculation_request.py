@@ -1,5 +1,5 @@
 # ******************************************************************************
-#  Copyright (c) 2020 University of Stuttgart
+#  Copyright (c) 2024 University of Stuttgart
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -17,17 +17,17 @@
 #  limitations under the License.
 # ******************************************************************************
 
-from app import db
+import marshmallow as ma
 
 
-class Result(db.Model):
-    id = db.Column(db.String(36), primary_key=True)
-    backend = db.Column(db.String(1200), default="")
-    shots = db.Column(db.Integer, default=0)
-    result = db.Column(db.String(1200), default="")
-    complete = db.Column(db.Boolean, default=False)
-    generated_circuit_id = db.Column(db.String(36), db.ForeignKey('generated__circuit.id'), nullable=True)
-    post_processing_result = db.Column(db.String(1200), default="")
+class AnalysisOriginalCircuitRequest:
+    def __init__(self, impl_url, impl_language, input_params):
+        self.impl_url = impl_url
+        self.impl_language = impl_language
+        self.input_params = input_params
 
-    def __repr__(self):
-        return 'Result {}'.format(self.result)
+
+class AnalysisOriginalCircuitRequestSchema(ma.Schema):
+    impl_url = ma.fields.String()
+    impl_language = ma.fields.String()
+    input_params = ma.fields.List(ma.fields.String())

@@ -1,0 +1,481 @@
+openapi: 3.0.2
+info:
+  title: pytket-service
+  description: This is the API Specification of the pytket-service (https://github.com/UST-QuAntiL/pytket-service).
+  version: "0.1"
+servers:
+- url: /
+tags:
+- name: Transpile
+  description: "Send implementation, input, QPU information, and your access token\
+    \ to the API to get analyzed properties of the transpiled circuit itself."
+- name: Execute
+  description: "Send implementation, input, QPU information, and your access token\
+    \ to the API to execute your circuit and get the result."
+- name: Analysis of Original Circuit
+  description: Request an analysis of the original circuit.
+- name: Results
+  description: Get execution results of an executed circuit.
+- name: Generated Circuits
+  description: Request a generated circuit and its properties.
+- name: Generate Circuit
+  description: Send implementation and input parameters to the API to generate your
+    circuit and get its properties.
+paths:
+  /pytket-service/api/v1.0/transpile:
+    post:
+      tags:
+      - Transpile
+      description: "*Note*: \"token\" should either be in \"input-params\" or extra.\
+        \ *Note*: \"url\", \"hub\", \"group\", \"project\" are optional such that\
+        \ otherwise the standard values are used."
+      requestBody:
+        description: "                Transpile via URL:\n                    \"impl-url\"\
+          : \"URL-OF-IMPLEMENTATION\" \n                Transpile via data:\n    \
+          \                \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n    \
+          \            Transpile via OpenQASM-String\n                    \"qasm-string\"\
+          : \"OpenQASM String\"\n                the \"input-params\"are of the form:\n\
+          \                    \"input-params\": {\n                        \"PARAM-NAME-1\"\
+          : {\n                            \"rawValue\": \"YOUR-VALUE-1\",\n     \
+          \                       \"type\": \"Integer\"\n                        },\n\
+          \                        \"PARAM-NAME-2\": {\n                         \
+          \   \"rawValue\": \"YOUR-VALUE-2\",\n                            \"type\"\
+          : \"String\"\n                        },\n                        ...\n\
+          \                        \"token\": {\n                            \"rawValue\"\
+          : \"YOUR-IBMQ-TOKEN\",\n                            \"type\": \"Unknown\"\
+          \n                        },\n                        \"url\": {\n     \
+          \                       \"rawValue\": \"YOUR-IBMQ-AUTHENTICATION-URL\",\n\
+          \                            \"type\": \"Unknown\"\n                   \
+          \     },\n                        \"hub\": {\n                         \
+          \   \"rawValue\": \"YOUR-IBMQ-HUB\",\n                            \"type\"\
+          : \"Unknown\"\n                        },\n                        \"group\"\
+          : {\n                            \"rawValue\": \"YOUR-IBMQ-GROUP\",\n  \
+          \                          \"type\": \"Unknown\"\n                     \
+          \   },\n                        \"project\": {\n                       \
+          \     \"rawValue\": \"YOUR-IBMQ-PROJECT\",\n                           \
+          \ \"type\": \"Unknown\"\n                        }"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranspileRequest'
+            example:
+              impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
+              qpu-name: ibmq_qasm_simulator
+              impl-language: qiskit
+              token: YOUR-IBMQ-TOKEN
+              input-params: {}
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranspileResponse'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pytket-service/api/v1.0/execute:
+    post:
+      tags:
+      - Execute
+      description: "*Note*: \"token\" should either be in \"input-params\" or extra.\
+        \ Both variants are combined here for illustration purposes. *Note*: \"url\"\
+        , \"hub\", \"group\", \"project\" are optional such that otherwise the standard\
+        \ values are used."
+      requestBody:
+        description: "                Execution via URL:\n                    \"impl-url\"\
+          : \"URL-OF-IMPLEMENTATION\" \n                Execution via data:\n    \
+          \                \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n    \
+          \            Execution via transpiled OpenQASM String:\n               \
+          \     \"transpiled-qasm\":\"TRANSPILED-QASM-STRING\" \n                for\
+          \ Batch Execution of multiple circuits use:\n                    \"impl-url\"\
+          : [\"URL-OF-IMPLEMENTATION-1\", \"URL-OF-IMPLEMENTATION-2\"]\n         \
+          \       the \"input-params\"are of the form:\n                    \"input-params\"\
+          : {\n                        \"PARAM-NAME-1\": {\n                     \
+          \       \"rawValue\": \"YOUR-VALUE-1\",\n                            \"\
+          type\": \"Integer\"\n                        },\n                      \
+          \  \"PARAM-NAME-2\": {\n                            \"rawValue\": \"YOUR-VALUE-2\"\
+          ,\n                            \"type\": \"String\"\n                  \
+          \      },\n                        ...\n                        \"token\"\
+          : {\n                            \"rawValue\": \"YOUR-IBMQ-TOKEN\",\n  \
+          \                          \"type\": \"Unknown\"\n                     \
+          \   },\n                        \"url\": {\n                           \
+          \ \"rawValue\": \"YOUR-IBMQ-AUTHENTICATION-URL\",\n                    \
+          \        \"type\": \"Unknown\"\n                        },\n           \
+          \             \"hub\": {\n                            \"rawValue\": \"YOUR-IBMQ-HUB\"\
+          ,\n                            \"type\": \"Unknown\"\n                 \
+          \       },\n                        \"group\": {\n                     \
+          \       \"rawValue\": \"YOUR-IBMQ-GROUP\",\n                           \
+          \ \"type\": \"Unknown\"\n                        },\n                  \
+          \      \"project\": {\n                            \"rawValue\": \"YOUR-IBMQ-PROJECT\"\
+          ,\n                            \"type\": \"Unknown\"\n                 \
+          \       }"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteRequest'
+            example:
+              impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
+              qpu-name: aer_simulator
+              provider: ibmq
+              impl-language: qiskit
+              token: YOUR-IBMQ-TOKEN
+              input-params: {}
+        required: true
+      responses:
+        "200":
+          description: Returns a content location for the result. Access it via GET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteResponse'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pytket-service/api/v1.0/analyze-original-circuit:
+    post:
+      tags:
+      - Analysis of Original Circuit
+      requestBody:
+        description: |2-
+                      "input-params" should be of the form:
+                      "input-params":{
+                          "PARAM-NAME-1": {
+                              "rawValue": "YOUR-VALUE-1",
+                              "type": "Integer"
+                          },
+                          "PARAM-NAME-2": {
+                              "rawValue": "YOUR-VALUE-2",
+                              "type": "String"
+                      }
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisOriginalCircuitRequest'
+            example:
+              impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
+              impl-language: qiskit
+              qpu-name: aer_simulator
+              provider: ibmq
+              input-params: {}
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisOriginalCircuitResponse'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pytket-service/api/v1.0/results/{id}:
+    get:
+      tags:
+      - Results
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minLength: 1
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pytket-service/api/v1.0/generated-circuits/{id}:
+    get:
+      tags:
+      - Generated Circuits
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          minLength: 1
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedCircuitsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pytket-service/api/v1.0/generate-circuit:
+    post:
+      tags:
+      - Generate Circuit
+      requestBody:
+        description: "                Generation via URL:\n                    \"\
+          impl-url\": \"URL-OF-IMPLEMENTATION\" \n                Generation via data:\n\
+          \                    \"impl-data\": \"BASE64-ENCODED-IMPLEMENTATION\"\n\
+          \                the \"input-params\"are of the form:\n                \
+          \    \"input-params\": {\n                        \"PARAM-NAME-1\": {\n\
+          \                            \"rawValue\": \"YOUR-VALUE-1\",\n         \
+          \                   \"type\": \"Integer\"\n                        },\n\
+          \                        \"PARAM-NAME-2\": {\n                         \
+          \   \"rawValue\": \"YOUR-VALUE-2\",\n                            \"type\"\
+          : \"String\"\n                        },\n                        ...\n\
+          \                        "
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCircuitRequest'
+            example:
+              impl-url: https://raw.githubusercontent.com/UST-QuAntiL/nisq-analyzer-content/master/example-implementations/Grover-SAT/grover-fix-sat-qiskit.py
+              impl-language: qiskit
+              input-params: {}
+        required: true
+      responses:
+        "200":
+          description: Returns a content location for the generated circuit and its
+            properties. Access it via GET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateCircuitResponse'
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+        status:
+          type: string
+          description: Error name
+        message:
+          type: string
+          description: Error message
+        errors:
+          type: object
+          description: Errors
+    PaginationMetadata:
+      type: object
+      properties:
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        first_page:
+          type: integer
+        last_page:
+          type: integer
+        page:
+          type: integer
+        previous_page:
+          type: integer
+        next_page:
+          type: integer
+    TranspileRequest:
+      type: object
+      properties:
+        impl_url:
+          type: string
+        impl_language:
+          type: string
+        qpu_name:
+          type: string
+        provider:
+          type: string
+        input_params:
+          type: array
+          items:
+            type: string
+        token:
+          type: string
+    TranspileResponse:
+      type: object
+      properties:
+        depth:
+          type: integer
+        multi_qubit_gate_depth:
+          type: integer
+        number_of_measurement_operations:
+          type: integer
+        number_of_multi_qubit_gates:
+          type: integer
+        number_of_single_qubit_gates:
+          type: integer
+        total_number_of_operations:
+          type: integer
+        transpiled_qasm:
+          type: string
+        width:
+          type: integer
+    ExecuteRequest:
+      type: object
+      properties:
+        impl_url:
+          type: string
+        impl_language:
+          type: string
+        qpu_name:
+          type: string
+        provider:
+          type: string
+        input_params:
+          type: array
+          items:
+            type: string
+        token:
+          type: string
+        noise_model:
+          type: string
+        only_measurement_errors:
+          type: boolean
+        correlation_id:
+          type: string
+    ExecuteResponse:
+      type: object
+      properties:
+        location:
+          type: string
+    AnalysisOriginalCircuitRequest:
+      type: object
+      properties:
+        impl_url:
+          type: string
+        impl_language:
+          type: string
+        input_params:
+          type: array
+          items:
+            type: string
+    AnalysisOriginalCircuitResponse:
+      type: object
+      properties:
+        original_depth:
+          type: integer
+        original_multi_qubit_gate_depth:
+          type: integer
+        original_number_of_measurement_operations:
+          type: integer
+        original_number_of_multi_qubit_gates:
+          type: integer
+        original_number_of_single_qubit_gates:
+          type: integer
+        original_total_number_of_operations:
+          type: integer
+        original_width:
+          type: integer
+    ResultsResponse:
+      type: object
+      properties:
+        result:
+          type: array
+          items:
+            type: string
+        post_processing_result:
+          type: array
+          items:
+            type: string
+    GeneratedCircuitsResponse:
+      type: object
+      properties:
+        original_depth:
+          type: integer
+        original_multi_qubit_gate_depth:
+          type: integer
+        original_number_of_measurement_operations:
+          type: integer
+        original_number_of_multi_qubit_gates:
+          type: integer
+        original_number_of_single_qubit_gates:
+          type: integer
+        original_total_number_of_operations:
+          type: integer
+        generated_circuit:
+          type: string
+        original_width:
+          type: integer
+    GenerateCircuitRequest:
+      type: object
+      properties:
+        impl_url:
+          type: string
+        impl_language:
+          type: string
+        input_params:
+          type: array
+          items:
+            type: string
+    GenerateCircuitResponse:
+      type: object
+      properties:
+        location:
+          type: string
+  responses:
+    UNPROCESSABLE_ENTITY:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DEFAULT_ERROR:
+      description: Default error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

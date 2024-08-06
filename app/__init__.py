@@ -30,9 +30,19 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from app import routes, result_model, errors
+from app import routes, result_model, errors, generated_circuit_model
+from app.controller import register_blueprints
+from flask_smorest import Api
 
 app.app_context().push()
 app.redis = Redis.from_url(app.config['REDIS_URL'], port=5040)
-app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=3600)
+app.execute_queue = rq.Queue('pytket-service_execute', connection=app.redis, default_timeout=10000)
+app.implementation_queue = rq.Queue('pytket-service_implementation_exe', connection=app.redis, default_timeout=10000)
 app.logger.setLevel(logging.INFO)
+
+api = Api(app)
+register_blueprints(api)
+
+@app.route("/")
+def heartbeat():
+    return '<h1>pytket-service is running</h1> <h3>View the API Docs <a href="/api/swagger-ui">here</a></h3>'
