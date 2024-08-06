@@ -158,15 +158,13 @@ def get_backend(provider, qpu):
         backend = BraketBackend(device=qpu_name_for_request, device_type='qpu', provider=qpu_provider_for_aws,
                                 region=aws_qpu_to_region[provider], aws_session=aws_session)
         return backend
-    """ Disabled as migration from pyquil v2 -> v3 is non-trivial
     if provider.lower() == "rigetti":
         # Create a connection to the forest SDK
-        connection = ForestConnection(
-            sync_endpoint=f"http://{qvm_hostname}:{qvm_port}",
-            compiler_endpoint=f"tcp://{quilc_hostname}:{quilc_port}")
+        connection = QCSClient(qvm_url=f"http://{qvm_hostname}:{qvm_port}",
+            quilc_url=f"tcp://{quilc_hostname}:{quilc_port}")
 
         return ForestBackend(qpu, simulator=True, connection=connection)
-    """
+
     # Default if no provider matched
     return None
 

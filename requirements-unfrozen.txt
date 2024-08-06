@@ -11,7 +11,7 @@ rq
 SQLAlchemy
 urllib3
 gunicorn
-pytket==1.29.0
+pytket
 pytket-qiskit==0.54.1
 pytket-pyquil
 pytket-braket
